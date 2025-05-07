@@ -11,7 +11,8 @@ import {
   useTheme,
   Stack,
   CircularProgress,
-  Tooltip
+  Tooltip,
+  Alert
 } from '@mui/material'
 import {
   GlobalSVG,
@@ -19,15 +20,16 @@ import {
   BlueBadge,
   NewCopy,
   NewLinkedin,
-  NewEmail
+  SVGEmail
 } from '../../../Assets/SVGs'
-
+import LoadingOverlay from '../../../components/Loading/LoadingOverlay'
 import { FormData } from '../../../credentialForm/form/types/Types'
 import { copyFormValuesToClipboard } from '../../../utils/formUtils'
 import { useStepContext } from '../StepContext'
+import { useRouter } from 'next/navigation'
 
 interface SuccessPageProps {
-  setActiveStep: (step: number) => void
+  setActiveStep: (step: number) => void //NOSONAR
   formData: FormData | null
   reset: () => void
   link: string
@@ -36,20 +38,30 @@ interface SuccessPageProps {
   storageOption: string
   fileId: string
   selectedImage: string
+  res: any
+}
+
+interface SnackbarState {
+  open: boolean
+  message: string
+  severity: 'success' | 'error'
 }
 
 const SuccessPage: React.FC<SuccessPageProps> = ({
   formData,
   reset,
-  link,
   setLink,
   setFileId,
   fileId,
-  storageOption,
-  selectedImage
+  res
 }) => {
+  const router = useRouter()
   const { setActiveStep } = useStepContext()
-  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbar, setSnackbar] = useState<SnackbarState>({
+    open: false,
+    message: '',
+    severity: 'success'
+  })
   const [tooltipMessage, setTooltipMessage] = useState('Signing your skill...')
   // refLink commented out. To use link and fileId Directly: Ensures the component uses the latest values from props.
   // const refLink = fileId
@@ -59,18 +71,28 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
   useEffect(() => {
     if (!fileId) {
       setTooltipMessage('Signing your skill...')
+      const timer1 = setTimeout(() => setTooltipMessage('Saving your skill...'), 3000)
+      const timer2 = setTimeout(() => setTooltipMessage('Fetching link...'), 6000)
+      return () => {
+        clearTimeout(timer1)
+        clearTimeout(timer2)
+      }
+    } else {
+      setTooltipMessage('Click to view')
     }
   }, [fileId])
 
-  useEffect(() => {
-    const timer1 = setTimeout(() => setTooltipMessage('Saving your skill...'), 2000)
-    const timer2 = setTimeout(() => setTooltipMessage('Fetching link...'), 6000)
+  const showNotification = (message: string, severity: 'success' | 'error') => {
+    setSnackbar({
+      open: true,
+      message,
+      severity
+    })
+  }
 
-    return () => {
-      clearTimeout(timer1)
-      clearTimeout(timer2)
-    }
-  }, [link])
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }))
+  }
 
   const generateLinkedInUrl = () => {
     const baseLinkedInUrl = 'https://www.linkedin.com/profile/add'
@@ -82,27 +104,37 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
       issueMonth: '8',
       expirationYear: '2025',
       expirationMonth: '8',
-      certUrl: `https://opencreds.net/view/${fileId}`
+      certUrl: `https://linkedcreds.allskillscount.org/view/${fileId}`
     })
     return `${baseLinkedInUrl}?${params.toString()}`
   }
 
-  const handleShareOption = (option: 'LinkedIn' | 'Email' | 'CopyURL' | 'View') => {
-    const credentialLink = `https://opencreds.net/view/${fileId}`
+  const handleShareOption = (
+    option: 'LinkedIn' | 'Email' | 'CopyURL' | 'View' | 'LinkedTrust'
+  ) => {
+    const credentialLink = `https://linkedcreds.allskillscount.org/view/${fileId}`
+    // const credentialData = res
+
     if (option === 'LinkedIn') {
       const linkedInUrl = generateLinkedInUrl()
       window.open(linkedInUrl, '_blank', 'noopener noreferrer')
-    } else if (option === 'Email') {
-      const mailUrl = `mailto:?subject=Check%20out%20my%20new%20certification&body=You%20can%20view%20my%20certification%20here:%20${encodeURIComponent(
-        credentialLink
-      )}`
-      window.location.href = mailUrl
-    } else if (option === 'CopyURL') {
-    } else if (option === 'View') {
-      window.location.href = `https://opencreds.net/view/${fileId}`
-    } else if (option === 'CopyURL') {
+      return
+    }
+
+    if (option === 'CopyURL') {
       copyFormValuesToClipboard(credentialLink)
-      setSnackbarOpen(true)
+      showNotification('Link copied to clipboard!', 'success')
+      return
+    }
+
+    if (option === 'View') {
+      window.location.href = credentialLink
+      return
+    }
+
+    if (option === 'Email') {
+      const mailPageUrl = `${window.location.origin}/mail/${fileId}`
+      window.location.href = mailPageUrl
     }
   }
 
@@ -182,23 +214,40 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
           fontFamily: 'Inter, sans-serif'
         }}
       >
-        <Button
-          onClick={() => handleShareOption('View')}
-          disabled={!fileId}
-          sx={{
-            ...buttonStyles,
-            mt: '15px',
-            border: '3px solid #003FE0'
-          }}
-        >
-          <BlueBadge />
-          {formData?.credentialName}{' '}
-          {!link && (
-            <Tooltip title={tooltipMessage}>
-              <CircularProgress size={24} />
-            </Tooltip>
-          )}
-        </Button>
+        <Tooltip placement='top' title={tooltipMessage}>
+          <span style={{ width: '100%' }}>
+            <Button
+              onClick={() => handleShareOption('View')}
+              disabled={!fileId}
+              sx={{
+                borderRadius: '10px',
+                backgroundColor: '#FFFFFF',
+                display: 'flex',
+                width: '100%',
+                alignItems: 'center',
+                gap: '20px',
+                justifyContent: 'space-between',
+                padding: '15px',
+                border: '3px solid #003FE0'
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <BlueBadge />
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                    margin: 0,
+                    color: '#003FE0'
+                  }}
+                >
+                  {formData?.credentialName}
+                </Typography>
+              </Box>
+              {!fileId && <CircularProgress size={24} />}
+            </Button>
+          </span>
+        </Tooltip>
 
         <Button
           onClick={() => handleShareOption('CopyURL')}
@@ -280,8 +329,8 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
           onClick={() => handleShareOption('Email')}
           sx={buttonStyles}
         >
-          <NewEmail />
-          Share via Email
+          <SVGEmail />
+          Share Via Mail
         </Button>
       </Box>
 
@@ -315,10 +364,11 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
         </Button>
         <Button
           onClick={() => {
-            setActiveStep(0)
+            setActiveStep(1)
             setLink('')
             setFileId('')
             reset()
+            router.push('/credentialForm#step1')
           }}
           variant='contained'
           sx={{
@@ -331,11 +381,16 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
       </Stack>
 
       <Snackbar
-        open={snackbarOpen}
+        open={snackbar.open}
         autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        message='Link copied to clipboard!'
-      />
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+      <LoadingOverlay text='Saving credential. Patience is a virtue...' open={!fileId} />
     </Box>
   )
 }

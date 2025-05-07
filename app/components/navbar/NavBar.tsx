@@ -17,7 +17,7 @@ const NavBar = () => {
   return (
     <Box
       sx={{
-        width: '100%',
+        width: '100vw',
         height: { xs: '27px', md: '100px' },
         display: 'flex',
         position: 'sticky',
@@ -36,26 +36,28 @@ const NavBar = () => {
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
-          ml: { xs: '15px', md: '12.5vw' }
+          pl: { xs: '15px', md: '9.6vw' }
         }}
       >
-        <Link href='/' aria-label='OpenCreds Home'>
-          <Box sx={{ display: 'flex', alignItems: 'center', marginRight: 1 }}>
+        <Link href='/' aria-label='LinkedCreds Home'>
+          <Box sx={{ display: 'flex', alignItems: 'center', marginRight: '0px' }}>
             <Logo />
           </Box>
         </Link>
-        <Link href='/' aria-label='OpenCreds Home'>
+        <Link href='/' aria-label='LinkedCreds Home'>
           <Typography
             sx={{
               fontWeight: '700',
               fontSize: { xs: '18px', md: '24px' },
-              color: theme.palette.t3DarkSlateBlue
+              color: theme.palette.t3DarkSlateBlue,
+              fontFamily: 'inter'
             }}
           >
-            OpenCreds
+            LinkedCreds
           </Typography>
         </Link>
       </Box>
+      <Box sx={{ width: '100%' }}></Box>
 
       {/* Navigation Links and Sign Button */}
       <Box
@@ -64,14 +66,20 @@ const NavBar = () => {
           display: { xs: 'none', md: 'flex' },
           alignItems: 'center',
           justifyContent: session ? 'space-between' : 'flex-end',
-          mr: { xs: '15px', md: '10.938vw' }
+          mr: { xs: '15px', md: '10.938vw' },
+          gap: '3.9vw',
+          textWrap: 'nowrap'
         }}
       >
         {session && (
           <>
             <Link href='/credentialForm' passHref>
               <Box
-                sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}
               >
                 <Typography
                   sx={{
@@ -153,6 +161,34 @@ const NavBar = () => {
                 )}
               </Box>
             </Link>
+            <Link href='/analytics' passHref>
+              <Box
+                sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '16px',
+                    fontWeight: isActive('/analytics') ? '600' : '400',
+                    color: isActive('/analytics')
+                      ? '#003FE0'
+                      : theme.palette.t3DarkSlateBlue,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Analytics
+                </Typography>
+                {isActive('/analytics') && (
+                  <Box
+                    sx={{
+                      height: '2px',
+                      width: '100%',
+                      mt: '5px',
+                      backgroundColor: '#003FE0'
+                    }}
+                  />
+                )}
+              </Box>
+            </Link>
 
             {/* Uncomment these links when needed */}
             {/* 
@@ -166,7 +202,7 @@ const NavBar = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  About OpenCreds
+                  About LinkedCreds
                 </Typography>
                 {isActive('/about') && (
                   <Box sx={{ height: '2px', width: '100%', mt: '5px', backgroundColor: '#003FE0' }} />
@@ -198,38 +234,35 @@ const NavBar = () => {
         {session ? (
           <Button
             sx={{
-              padding: '10px 20px',
-              borderRadius: '100px',
-              textTransform: 'capitalize',
-              fontFamily: 'Roboto',
-              fontWeight: '600',
+              width: '148px',
+              fontFamily: 'roboto',
+              fontSize: '16px',
+              fontWeight: '500',
               lineHeight: '20px',
-              backgroundColor: '#003FE0',
-              color: '#FFF',
-              '&:hover': {
-                backgroundColor: '#003FE0'
-              }
+              textAlign: 'center',
+              justifyContent: 'center'
             }}
-            onClick={() => signOut()}
+            variant='actionButton'
+            onClick={() => {
+              signOut()
+              localStorage.clear()
+            }}
           >
             Sign Out
           </Button>
         ) : (
           <Button
             sx={{
-              padding: '10px 20px',
-              borderRadius: '100px',
-              textTransform: 'capitalize',
-              fontFamily: 'Roboto',
-              fontWeight: '600',
+              width: '148px',
+              fontFamily: 'roboto',
+              fontSize: '16px',
+              fontWeight: '500',
               lineHeight: '20px',
-              backgroundColor: '#003FE0',
-              color: '#FFF',
-              '&:hover': {
-                backgroundColor: '#003FE0'
-              }
+              textAlign: 'center',
+              justifyContent: 'center'
             }}
-            onClick={() => signIn()}
+            variant='actionButton'
+            onClick={() => signIn('google')}
           >
             Sign In
           </Button>

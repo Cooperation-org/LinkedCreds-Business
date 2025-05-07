@@ -1,4 +1,4 @@
-import { CredentialEngine } from '@cooperation/vc-storage'
+import { CredentialEngine, GoogleDriveStorage } from '@cooperation/vc-storage'
 import { FormData } from '../credentialForm/form/types/Types'
 
 interface FormDataI {
@@ -28,7 +28,8 @@ function getCredentialEngine(accessToken: string): CredentialEngine {
   if (!accessToken) {
     throw new Error('Access token is required to instantiate CredentialEngine.')
   }
-  return new CredentialEngine(accessToken)
+  const storage = new GoogleDriveStorage(accessToken)
+  return new CredentialEngine(storage)
 }
 
 /**
@@ -83,16 +84,21 @@ const signCred = async (
     const credentialEngine = getCredentialEngine(accessToken)
     if (type === 'RECOMMENDATION') {
       formData = generateRecommendationData(data)
-      signedVC = await credentialEngine.signVC(
-        formData,
-        'RECOMMENDATION',
+      signedVC = await credentialEngine.signVC({
+        data: formData,
+        type: 'RECOMMENDATION',
         keyPair,
-        issuerDid
-      )
+        issuerId: issuerDid
+      })
     } else {
       formData = generateCredentialData(data)
       console.log('🚀 ~ formData:', formData)
-      signedVC = await credentialEngine.signVC(formData, 'VC', keyPair, issuerDid)
+      signedVC = await credentialEngine.signVC({
+        data: formData,
+        type: 'VC',
+        keyPair,
+        issuerId: issuerDid
+      })
     }
 
     return signedVC
@@ -138,7 +144,7 @@ export const generateCredentialData = (data: FormData): FormDataI => {
 const generateRecommendationData = (data: any): RecommendationI => {
   return {
     recommendationText: data.recommendationText,
-    qualifications: data.howKnow,
+    qualifications: data.qualifications,
     expirationDate: new Date(
       new Date().setFullYear(new Date().getFullYear() + 1)
     ).toISOString(),

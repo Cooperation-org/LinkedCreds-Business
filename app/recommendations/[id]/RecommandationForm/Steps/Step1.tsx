@@ -1,12 +1,11 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Box, Typography, Button, Tooltip } from '@mui/material'
 import { UseFormWatch, UseFormSetValue } from 'react-hook-form'
 import { FormData } from '../../../../credentialForm/form/types/Types'
 import { SVGFolder, SVGSinfo } from '../../../../Assets/SVGs'
 import { signIn, useSession } from 'next-auth/react'
-import { useStepContext } from '../../../../credentialForm/form/StepContext'
 
 interface Step1Props {
   watch: UseFormWatch<FormData>
@@ -16,17 +15,23 @@ interface Step1Props {
 
 const Step1: React.FC<Step1Props> = ({ handleNext }) => {
   const { data: session } = useSession()
-  const { setUploadImageFn } = useStepContext()
+  const accessToken = session?.accessToken
+
+  useEffect(() => {
+    if (accessToken) {
+      handleNext()
+    }
+  }, [accessToken, handleNext])
 
   const connectToGoogleDrive = async () => {
-    if (session?.accessToken) {
+    if (accessToken) {
       handleNext()
       return
     }
 
     try {
       await signIn('google', {
-        callbackUrl: `${window.location.origin}/credentialForm#step1`
+        callbackUrl: `${window.location.origin}/recommendations#step1`
       })
     } catch (error) {
       console.error('Error connecting to Google Drive:', error)
@@ -34,13 +39,8 @@ const Step1: React.FC<Step1Props> = ({ handleNext }) => {
   }
 
   // Determine tooltip text based on authentication status
-  const tooltipTitle = session?.accessToken
+  const tooltipTitle = accessToken
     ? 'You are connected to Google Drive. This is where your recommendation will be saved.'
-    : 'You must have a Google Drive account and be able to login. This is where your recommendation will be saved.'
-
-  // Determine main text based on authentication status
-  const mainText = session?.accessToken
-    ? ''
     : 'You must have a Google Drive account and be able to login. This is where your recommendation will be saved.'
 
   return (
@@ -69,50 +69,46 @@ const Step1: React.FC<Step1Props> = ({ handleNext }) => {
         <SVGFolder />
       </Box>
 
-      <Typography
-        sx={{
-          fontSize: 24
-        }}
-      >
-        {mainText}
-      </Typography>
+      {!accessToken && (
+        <Button
+          variant='contained'
+          color='primary'
+          onClick={connectToGoogleDrive}
+          sx={{
+            mt: 2,
+            px: 4,
+            py: 0.5,
+            fontSize: '16px',
+            borderRadius: 5,
+            textTransform: 'none',
+            backgroundColor: '#003FE0',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          Login with Google Drive
+          <Tooltip title={tooltipTitle}>
+            <Box sx={{ ml: 2, mt: '2px' }}>
+              <SVGSinfo />
+            </Box>
+          </Tooltip>
+        </Button>
+      )}
 
-      <Button
-        variant='contained'
-        color='primary'
-        onClick={connectToGoogleDrive}
-        sx={{
-          mt: 2,
-          px: 4,
-          py: 0.5,
-          fontSize: '16px',
-          borderRadius: 5,
-          textTransform: 'none',
-          backgroundColor: '#003FE0',
-          display: 'flex',
-          alignItems: 'center'
-        }}
-      >
-        Connect to Google Drive
-        <Tooltip title={tooltipTitle}>
-          <Box sx={{ ml: 2, mt: '2px' }}>
-            <SVGSinfo />
-          </Box>
-        </Tooltip>
-      </Button>
-
-      <Button
-        variant='text'
-        color='primary'
-        onClick={() => handleNext()}
-        sx={{
-          fontSize: '14px',
-          textDecoration: 'underline',
-          textTransform: 'none'
-        }}
-      >
-        Continue without Saving
-      </Button>
+      {!accessToken && (
+        <Button
+          variant='text'
+          color='primary'
+          onClick={() => handleNext()}
+          sx={{
+            fontSize: '14px',
+            textDecoration: 'underline',
+            textTransform: 'none'
+          }}
+        >
+          Continue without Saving
+        </Button>
+      )}
     </Box>
   )
 }

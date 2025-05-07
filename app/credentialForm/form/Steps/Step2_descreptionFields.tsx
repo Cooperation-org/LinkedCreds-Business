@@ -1,14 +1,20 @@
 'use client'
 
 import React from 'react'
-import { FormLabel, Autocomplete, TextField, Box, Typography } from '@mui/material'
+import {
+  FormLabel,
+  Autocomplete,
+  TextField,
+  Box,
+  Typography,
+  Tooltip
+} from '@mui/material'
 import {
   inputPropsStyles,
   TextFieldStyles,
   formLabelStyles,
   CustomTextField,
   customTextFieldStyles,
-  aiBoxStyles,
   UseAIStyles
 } from '../../../components/Styles/appStyles'
 import { UseFormRegister, FieldErrors, Controller } from 'react-hook-form'
@@ -26,14 +32,10 @@ interface Step2Props {
 
 // Example list of skills for auto-search
 const skillsList = [
-  'Software Developer',
-  'Project Manager',
-  'Data Analyst',
-  'Marketing Coordinator',
-  'Community Gardening Coordinator',
-  'UX/UI Designer',
-  'Product Manager',
-  'Financial Analyst'
+  'Leadership',
+  'Customer Service',
+  'Landscape Design',
+  'Software Development'
 ]
 
 export function Step2({ register, watch, control, errors }: Readonly<Step2Props>) {
@@ -43,7 +45,18 @@ export function Step2({ register, watch, control, errors }: Readonly<Step2Props>
     >
       <SVGDescribeBadge />
       <Typography sx={{ fontFamily: 'Lato', fontSize: '24px', fontWeight: 400 }}>
-        Describe your skill.{' '}
+        Step 2
+      </Typography>
+      <Typography
+        sx={{
+          fontFamily: 'Lato',
+          fontSize: '16px',
+          fontWeight: 400,
+          maxWidth: '360px',
+          textAlign: 'center'
+        }}
+      >
+        Now take a moment to describe the skill or experience you want to document.{' '}
       </Typography>
       <StepTrackShape />
       <Box sx={{ width: '100%' }}>
@@ -69,7 +82,7 @@ export function Step2({ register, watch, control, errors }: Readonly<Step2Props>
               renderInput={params => (
                 <TextField
                   {...params}
-                  placeholder='e.g., Community Gardening Coordinator'
+                  placeholder='Example: Caring for (cultivating) healthy plants'
                   variant='outlined'
                   sx={TextFieldStyles}
                   aria-labelledby='name-label'
@@ -84,25 +97,6 @@ export function Step2({ register, watch, control, errors }: Readonly<Step2Props>
               )}
             />
           )}
-        />
-      </Box>
-
-      <Box sx={{ width: '100%' }}>
-        <FormLabel sx={formLabelStyles} id='duration-label'>
-          Time spent acquiring this skill:{' '}
-        </FormLabel>
-        <TextField
-          {...register('credentialDuration')}
-          placeholder='I learned these skills through working at a community garden for 2 years, under the head gardener Maria Hernandez'
-          variant='outlined'
-          sx={TextFieldStyles}
-          aria-labelledby='duration-label'
-          inputProps={{
-            'aria-label': 'weight',
-            style: inputPropsStyles
-          }}
-          error={!!errors.credentialDuration}
-          helperText={errors.credentialDuration?.message}
         />
       </Box>
 
@@ -132,11 +126,13 @@ export function Step2({ register, watch, control, errors }: Readonly<Step2Props>
               : `${watch('credentialDescription').length}/${294} characters`
           }
         />
-        <Box sx={aiBoxStyles}>
+        <Box sx={{ display: 'flex', gap: '5px' }}>
           <SVGSparkles />
-          <FormLabel sx={UseAIStyles} id='ai-description-label'>
-            Use AI to generate a description.
-          </FormLabel>
+          <Tooltip title='Under development' arrow>
+            <FormLabel sx={UseAIStyles} id='ai-description-label'>
+              Use AI to generate a description.
+            </FormLabel>
+          </Tooltip>
         </Box>
       </Box>
       <Box position='relative' width='100%'>
@@ -164,6 +160,25 @@ export function Step2({ register, watch, control, errors }: Readonly<Step2Props>
               ? `${errors.description.message}`
               : `${watch('description').length}/${294} characters`
           }
+        />
+      </Box>
+
+      <Box sx={{ width: '100%' }}>
+        <FormLabel sx={formLabelStyles} id='duration-label'>
+          Time spent acquiring this skill:{' '}
+        </FormLabel>
+        <TextField
+          {...register('credentialDuration')}
+          placeholder='Example: 3 years'
+          variant='outlined'
+          sx={TextFieldStyles}
+          aria-labelledby='duration-label'
+          inputProps={{
+            'aria-label': 'weight',
+            style: inputPropsStyles
+          }}
+          error={!!errors.credentialDuration}
+          helperText={errors.credentialDuration?.message}
         />
       </Box>
     </Box>

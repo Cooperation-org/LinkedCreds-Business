@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
+import { setCookie } from '../../../utils/cookie'
 
 declare module 'next-auth' {
   interface Session {
@@ -30,11 +31,12 @@ declare module 'next-auth' {
 const handler = NextAuth({
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '',
+      clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET ?? '',
       authorization: {
         params: {
-          scope: 'openid email profile https://www.googleapis.com/auth/drive.file',
+          scope:
+            'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata',
           access_type: 'offline',
           prompt: 'consent'
         }
@@ -45,6 +47,12 @@ const handler = NextAuth({
     async jwt({ token, account, user }) {
       // Initial sign-in
       if (account && user) {
+        const accessToken = account.access_token
+        const refreshToken = account.refresh_token
+
+        setCookie('accessToken', accessToken as string, { expires: 60 * 60 * 24 * 30 }) // Expire in 30 days
+        setCookie('refreshToken', refreshToken as string, { expires: 60 * 60 * 24 * 30 })
+
         return {
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
@@ -85,13 +93,12 @@ const handler = NextAuth({
       }
       session.user = token.user
 
-      console.log('🚀 ~ session ~ session:', session)
       return session
     }
   },
   session: {
     strategy: 'jwt',
-    maxAge: 60 * 60 * 24 * 2, // 2 days
+    maxAge: 60 * 60 * 24 * 7, // 2 days
     updateAge: 60 * 60 * 24 // 1 day
   }
 })
@@ -106,8 +113,8 @@ async function refreshAccessToken(token: any) {
       },
       method: 'POST',
       body: new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID ?? '',
-        client_secret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '',
+        client_secret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET ?? '',
         grant_type: 'refresh_token',
         refresh_token: token.refreshToken
       })
