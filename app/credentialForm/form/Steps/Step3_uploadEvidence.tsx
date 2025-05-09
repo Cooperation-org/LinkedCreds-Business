@@ -1,14 +1,13 @@
 'use client'
 
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { Box, Typography, styled, Card } from '@mui/material'
 
-import FileListDisplay from '../../../components/FileList'
-import { GoogleDriveStorage, uploadToGoogleDrive } from '@cooperation/vc-storage'
+import MediaUploadSection from '../../../components/MediaUploadSection'
 import useGoogleDrive from '../../../hooks/useGoogleDrive'
 import { useStepContext } from '../StepContext'
 import LoadingOverlay from '../../../components/Loading/LoadingOverlay'
-import { TasksVector, SVGUplaodLink, SVGUploadMedia } from '../../../Assets/SVGs'
+import { TasksVector, SVGUplaodLink } from '../../../Assets/SVGs'
 import { StepTrackShape } from '../fromTexts & stepTrack/StepTrackShape'
 import { FileItem } from '../types/Types'
 import LinkAdder from '../../../components/LinkAdder'
@@ -60,21 +59,16 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
 }) => {
   const { loading, setUploadImageFn } = useStepContext()
   const [showLinkAdder, setShowLinkAdder] = useState(false)
-  const [showMediaAdder, setShowMediaAdder] = useState(false)
   const { storage } = useGoogleDrive()
   const [files, setFiles] = useState<FileItem[]>([...selectedFiles])
   const [links, setLinks] = useState<LinkItem[]>([
     { id: crypto.randomUUID(), name: '', url: '' }
   ])
-  const maxFiles = 10
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const handleFileUploadClick = () => {
-    if (fileInputRef.current) fileInputRef.current.click()
-  }
   useEffect(() => {
     setFiles([...selectedFiles])
   }, [selectedFiles])
+
   const handleFilesSelected = useCallback(
     (newFiles: FileItem[]) => {
       setFiles(newFiles)
@@ -163,9 +157,11 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
       console.error('Error uploading files:', error)
     }
   }, [selectedFiles, setValue, setSelectedFiles, storage, watch])
+
   const handleAddLink = useCallback(() => {
     setLinks(prev => [...prev, { id: crypto.randomUUID(), name: '', url: '' }])
   }, [])
+
   const handleRemoveLink = useCallback(
     (index: number) => {
       setLinks(prev => prev.filter((_, i) => i !== index))
@@ -177,6 +173,7 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     },
     [setValue, watch]
   )
+
   const handleLinkChange = useCallback(
     (index: number, field: 'name' | 'url', value: string) => {
       setLinks(prev =>
@@ -189,6 +186,7 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     },
     [setValue, watch]
   )
+
   const handleNameChange = useCallback(
     (id: string, newName: string) => {
       const updateFiles = (prevFiles: FileItem[]) =>
@@ -198,6 +196,7 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     },
     [setSelectedFiles]
   )
+
   const setAsFeatured = useCallback(
     (id: string) => {
       const updateFiles = (prevFiles: FileItem[]) =>
@@ -209,6 +208,7 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     },
     [setSelectedFiles]
   )
+
   const handleDelete = useCallback(
     (event: React.MouseEvent, id: string) => {
       event.stopPropagation()
@@ -242,62 +242,12 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     },
     [setValue, watch, files, setSelectedFiles]
   )
+
   useEffect(() => {
     // @ts-ignore-next-line
     setUploadImageFn(() => handleUpload)
   }, [handleUpload, setUploadImageFn])
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newFiles = event.target.files
-    if (newFiles) {
-      if (files.length + newFiles.length > maxFiles) {
-        alert(`You can only upload a maximum of ${maxFiles} files.`)
-        return
-      }
-
-      const filesArray = Array.from(newFiles)
-      const isAnyFileFeatured = files.some(file => file.isFeatured)
-      let hasSetFeatured = isAnyFileFeatured
-
-      const processFile = (file: File) => {
-        return new Promise<FileItem>(resolve => {
-          const reader = new FileReader()
-          reader.onload = e => {
-            const newFileItem: FileItem = {
-              id: crypto.randomUUID(),
-              file: file,
-              name: file.name,
-              url: e.target?.result as string,
-              isFeatured: !hasSetFeatured && files.length === 0,
-              uploaded: false,
-              fileExtension: file.name.split('.').pop() ?? ''
-            }
-
-            if (newFileItem.isFeatured) hasSetFeatured = true
-            resolve(newFileItem)
-          }
-          reader.readAsDataURL(file)
-        })
-      }
-
-      Promise.all(filesArray.map(processFile)).then(newFileItems => {
-        const updatedFiles = [...files]
-        newFileItems.forEach(newFile => {
-          const duplicateIndex = updatedFiles.findIndex(f => f.name === newFile.name)
-          if (duplicateIndex !== -1) {
-            updatedFiles[duplicateIndex] = newFile
-          } else {
-            if (newFile.isFeatured) {
-              updatedFiles.unshift(newFile)
-            } else {
-              updatedFiles.push(newFile)
-            }
-          }
-        })
-        handleFilesSelected(updatedFiles)
-      })
-    }
-  }
   return (
     <Box
       sx={{
@@ -366,30 +316,16 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
 
         {/* Add Media Section */}
         <Box width='100%'>
-          <CardStyle variant='outlined' onClick={handleFileUploadClick}>
-            <FileListDisplay
-              files={[...selectedFiles]}
-              onDelete={handleDelete}
-              onNameChange={handleNameChange}
-              onSetAsFeatured={setAsFeatured}
-              onReorder={handleReorder}
-            />
-            <SVGUploadMedia />
-
-            <Typography variant='body1' color='primary' align='center'>
-              + Add media
-              <br />
-              (images, documents, video)
-            </Typography>
-            <input
-              type='file'
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              style={{ display: 'none' }}
-              accept='*'
-              multiple
-            />
-          </CardStyle>
+          <MediaUploadSection
+            files={files}
+            onFilesSelected={handleFilesSelected}
+            onDelete={handleDelete}
+            onNameChange={handleNameChange}
+            onSetAsFeatured={setAsFeatured}
+            onReorder={handleReorder}
+            maxFiles={10}
+            maxSizeMB={20}
+          />
         </Box>
       </Box>
 
@@ -397,6 +333,7 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     </Box>
   )
 }
+
 const CardStyle = styled(Card)({
   padding: '40px 20px',
   cursor: 'pointer',
