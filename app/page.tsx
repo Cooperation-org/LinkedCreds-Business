@@ -112,7 +112,7 @@ const LinkedCreds_FEATURES = [
   { id: 'beautiful', text: 'Presented beautifully' },
   { id: 'ownership', text: 'Owned by you' },
   { id: 'control', text: 'You control access' },
-  { id: 'no-degree', text: 'For everyone!' }
+  { id: 'no-degree', text: "Don't require a degree" }
 ]
 
 const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCards }) => {
@@ -191,7 +191,7 @@ const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCard
           )}
         </Typography>
 
-        <Link href='/credentialForm' passHref>
+        <Link href='/newcredential' passHref>
           <Button
             variant='contained'
             sx={{
@@ -400,7 +400,7 @@ const StepsSection: React.FC<SectionProps> = ({ theme }) => (
         </Box>
       ))}
     </Box>
-    <Link href='/credentialForm' passHref>
+    <Link href='/newcredential' passHref>
       <Button
         variant='contained'
         sx={{

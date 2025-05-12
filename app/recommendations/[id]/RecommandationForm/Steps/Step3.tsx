@@ -5,10 +5,10 @@ import { Box, Typography, styled, Card } from '@mui/material'
 
 import MediaUploadSection from '../../../../components/MediaUploadSection'
 import useGoogleDrive from '../../../../hooks/useGoogleDrive'
-import { useStepContext } from '../../../../credentialForm/form/StepContext'
+import { useStepContext } from '../../../../skillform/form/StepContext'
 import LoadingOverlay from '../../../../components/Loading/LoadingOverlay'
 import { TasksVector, SVGUplaodLink } from '../../../../Assets/SVGs'
-import { FileItem } from '../../../../credentialForm/form/types/Types'
+import { FileItem } from '../../../../skillform/form/types/Types'
 import LinkAdder from '../../../../components/LinkAdder'
 import { formLabelStyles } from '../../../../components/Styles/appStyles'
 
@@ -186,7 +186,6 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     },
     [setValue, watch]
   )
-
   const handleNameChange = useCallback(
     (id: string, newName: string) => {
       const updateFiles = (prevFiles: FileItem[]) =>
@@ -196,7 +195,6 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     },
     [setSelectedFiles]
   )
-
   const setAsFeatured = useCallback(
     (id: string) => {
       const updateFiles = (prevFiles: FileItem[]) =>
@@ -208,7 +206,6 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     },
     [setSelectedFiles]
   )
-
   const handleDelete = useCallback(
     (event: React.MouseEvent, id: string) => {
       event.stopPropagation()
@@ -242,7 +239,6 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
     },
     [setValue, watch, files, setSelectedFiles]
   )
-
   useEffect(() => {
     // @ts-ignore-next-line
     setUploadImageFn(() => handleUpload)

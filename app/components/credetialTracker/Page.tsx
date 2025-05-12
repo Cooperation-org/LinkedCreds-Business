@@ -1,15 +1,6 @@
 import React from 'react'
-import {
-  Box,
-  Typography,
-  Paper,
-  Container,
-  styled,
-  Card,
-  CardContent,
-  Divider
-} from '@mui/material'
-import { FormData } from '../../credentialForm/form/types/Types'
+import { Box, Typography, Paper, styled, Card, CardContent } from '@mui/material'
+import { FormData } from '../../skillform/form/types/Types'
 import { Logo } from '../../Assets/SVGs'
 
 // Styled components

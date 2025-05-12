@@ -23,7 +23,7 @@ import {
   SVGEmail
 } from '../../../Assets/SVGs'
 import LoadingOverlay from '../../../components/Loading/LoadingOverlay'
-import { FormData } from '../../../credentialForm/form/types/Types'
+import { FormData } from '../../../skillform/form/types/Types'
 import { copyFormValuesToClipboard } from '../../../utils/formUtils'
 import { useStepContext } from '../StepContext'
 import { useRouter } from 'next/navigation'
@@ -368,7 +368,7 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
             setLink('')
             setFileId('')
             reset()
-            router.push('/credentialForm#step1')
+            router.push('/newcredential#step1')
           }}
           variant='contained'
           sx={{
