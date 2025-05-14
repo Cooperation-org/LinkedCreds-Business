@@ -29,6 +29,7 @@ interface Step2Props {
   watch: (field: FieldPath<FormData>) => any
   control: any
   errors: FieldErrors<FormData>
+  setValue: any
 }
 
 const skillsList = [
@@ -145,7 +146,13 @@ const formConfigs: Record<string, Config> = {
   }
 }
 
-export function Step2({ register, watch, control, errors }: Readonly<Step2Props>) {
+export function Step2({
+  register,
+  watch,
+  control,
+  errors,
+  setValue
+}: Readonly<Step2Props>) {
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
   const config = formConfigs[segment] || formConfigs.skill
 
@@ -173,8 +180,12 @@ export function Step2({ register, watch, control, errors }: Readonly<Step2Props>
               freeSolo
               options={skillsList}
               value={ctl.value ?? ''}
-              onChange={(_, v) => ctl.onChange(v)}
-              onInputChange={(_, v) => ctl.onChange(v)}
+              onChange={(_, v) => {
+                ctl.onChange(v)
+              }}
+              onInputChange={(_, v) => {
+                ctl.onChange(v)
+              }}
               renderInput={params => (
                 <TextField
                   {...params}
@@ -302,7 +313,23 @@ export function Step2({ register, watch, control, errors }: Readonly<Step2Props>
                 <Controller
                   name='currentVolunteer'
                   control={control}
-                  render={({ field }) => <Checkbox {...field} />}
+                  render={({ field }) => (
+                    <Checkbox
+                      {...field}
+                      onChange={e => {
+                        field.onChange(e)
+                        const currentValue = watch('volunteerDates')
+                        if (e.target.checked) {
+                          setValue('volunteerDates', `${currentValue} -present`)
+                        } else {
+                          setValue(
+                            'volunteerDates',
+                            currentValue.replace(' -present', '')
+                          )
+                        }
+                      }}
+                    />
+                  )}
                 />
               }
               label='Currently volunteering here'

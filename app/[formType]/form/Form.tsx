@@ -83,8 +83,11 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
       issuingCountry: '',
       expirationDate: ''
     },
-    mode: 'onChange'
+    mode: 'onChange',
+    reValidateMode: 'onChange'
   })
+
+  const formValues = watch()
 
   useEffect(() => {
     setPrevStep(activeStep + 1)
@@ -294,7 +297,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
         )}
         {snackMessage && <SnackMessage message={snackMessage} />}
       </form>
-      {activeStep >= 1 && <CredentialTracker formData={watch()} />}
+      {activeStep >= 1 && <CredentialTracker formData={formValues} />}
     </Box>
   )
 }

@@ -2,9 +2,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, styled } from '@mui/material/styles'
 import { Box, Typography, useMediaQuery, Theme } from '@mui/material'
-import { FormData } from '../types/Types'
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist'
 import {
   commonTypographyStyles,
@@ -12,6 +11,8 @@ import {
   evidenceListStyles
 } from '../../../components/Styles/appStyles'
 import { StepTrackShape } from '../fromTexts & stepTrack/StepTrackShape'
+import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 
 GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
 const isPDF = (fileName: string) => fileName.toLowerCase().endsWith('.pdf')
@@ -29,6 +30,34 @@ const cleanHTML = (htmlContent: string) => {
     .replace(/style="[^"]*"/g, '')
 }
 
+interface FormData {
+  credentialName?: string
+  credentialDescription?: string
+  description?: string
+  credentialDuration?: string
+  volunteerDescription?: string
+  duration?: string
+  skillsGained?: string
+  role?: string
+  company?: string
+  employeeName?: string
+  employeeJobTitle?: string
+  reviewComments?: string
+  overallRating?: string
+  goalsNext?: string
+  documentType?: string
+  documentNumber?: string
+  issuingCountry?: string
+  expirationDate?: string
+  evidenceLink?: string
+  supportingDocs?: string
+  volunteerWork?: string
+  portfolio?: Array<{
+    name: string
+    url: string
+  }>
+}
+
 interface DataPreviewProps {
   formData: FormData
   selectedFiles: {
@@ -38,6 +67,32 @@ interface DataPreviewProps {
     isFeatured?: boolean
   }[]
 }
+
+const Label = styled(Typography)({
+  fontFamily: 'Inter',
+  fontSize: '16px',
+  fontWeight: 700,
+  lineHeight: '24px',
+  color: '#000e40'
+})
+
+const Value = styled(Typography)({
+  fontFamily: 'Inter',
+  fontSize: '16px',
+  fontWeight: 400,
+  lineHeight: '24px',
+  color: '#6b7280'
+})
+
+const Media = styled(Box)({
+  width: '160.506px',
+  height: '153.129px',
+  position: 'relative',
+  borderRadius: '10px',
+  overflow: 'hidden',
+  margin: '0 auto'
+})
+
 const renderPDFThumbnail = async (fileUrl: string) => {
   try {
     const loadingTask = getDocument(fileUrl)
@@ -96,6 +151,7 @@ const generateVideoThumbnail = (videoUrl: string): Promise<string> => {
 const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) => {
   const theme: Theme = useTheme()
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('sm'))
+  const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
 
   const [pdfThumbnails, setPdfThumbnails] = useState<Record<string, string>>({})
   const [videoThumbnails, setVideoThumbnails] = useState<Record<string, string>>({})
@@ -125,13 +181,271 @@ const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) =>
   const handleNavigate = (url: string, target: string = '_self') => {
     window.open(url, target)
   }
+
   const shouldDisplayUrl = (url: string): boolean => {
     return !isGoogleDriveImageUrl(url)
   }
 
-  const hasValidEvidence = formData.portfolio?.some(
-    (porto: { name: string; url: string }) => porto.name && porto.url
-  )
+  const renderFormSpecificContent = () => {
+    switch (segment) {
+      case 'skill':
+        return (
+          <>
+            <Box sx={{ mb: 2.5 }}>
+              <Label>Earning Criteria</Label>
+              <Value>
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: cleanHTML(formData?.description || '')
+                  }}
+                />
+              </Value>
+            </Box>
+            {formData.credentialDuration && (
+              <Box sx={{ mb: 2.5 }}>
+                <Label>Duration</Label>
+                <Value>{formData.credentialDuration}</Value>
+              </Box>
+            )}
+          </>
+        )
+      case 'volunteer':
+        return (
+          <>
+            <Box sx={{ mb: 2.5 }}>
+              <Label>Volunteer Description</Label>
+              <Value>
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: cleanHTML(formData?.volunteerDescription || '')
+                  }}
+                />
+              </Value>
+            </Box>
+            {formData.duration && (
+              <Box sx={{ mb: 2.5 }}>
+                <Label>Duration</Label>
+                <Value>{formData.duration}</Value>
+              </Box>
+            )}
+            {formData.skillsGained && (
+              <Box sx={{ mb: 2.5 }}>
+                <Label>Skills gained</Label>
+                <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                  {(formData.skillsGained || '')
+                    .split(/\n|,|•/)
+                    .map((skill: string, index: number) => (
+                      <li
+                        key={index}
+                        style={{
+                          color: '#6b7280',
+                          fontFamily: 'Inter',
+                          fontSize: '16px'
+                        }}
+                      >
+                        {skill.trim()}
+                      </li>
+                    ))}
+                </ul>
+              </Box>
+            )}
+          </>
+        )
+      case 'role':
+        return (
+          <>
+            <Box sx={{ mb: 2.5 }}>
+              <Label>Role</Label>
+              <Value>{formData.role || ''}</Value>
+            </Box>
+            <Box sx={{ mb: 2.5 }}>
+              <Label>Company</Label>
+              <Value>{formData.company || ''}</Value>
+            </Box>
+          </>
+        )
+      case 'performance-review':
+        return (
+          <>
+            <Box sx={{ mb: 2.5 }}>
+              <Label>Employee</Label>
+              <Value>{formData.employeeName || ''}</Value>
+            </Box>
+            <Box sx={{ mb: 2.5 }}>
+              <Label>Job Title</Label>
+              <Value>{formData.employeeJobTitle || ''}</Value>
+            </Box>
+            {formData.reviewComments && (
+              <Box sx={{ mb: 2.5 }}>
+                <Label>Review Comments</Label>
+                <Value>
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: cleanHTML(formData.reviewComments || '')
+                    }}
+                  />
+                </Value>
+              </Box>
+            )}
+            {formData.overallRating && (
+              <Box sx={{ mb: 2.5 }}>
+                <Label>Overall Rating</Label>
+                <Value>{formData.overallRating}</Value>
+              </Box>
+            )}
+            {formData.goalsNext && (
+              <Box sx={{ mb: 2.5 }}>
+                <Label>Goals for Next Period</Label>
+                <Value>
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: cleanHTML(formData.goalsNext || '')
+                    }}
+                  />
+                </Value>
+              </Box>
+            )}
+          </>
+        )
+      case 'identity-verification':
+        return (
+          <>
+            <Box sx={{ mb: 2.5 }}>
+              <Label>Document Type</Label>
+              <Value>{formData.documentType || ''}</Value>
+            </Box>
+            <Box sx={{ mb: 2.5 }}>
+              <Label>Document Number</Label>
+              <Value>{formData.documentNumber || ''}</Value>
+            </Box>
+            <Box sx={{ mb: 2.5 }}>
+              <Label>Issuing Country</Label>
+              <Value>{formData.issuingCountry || ''}</Value>
+            </Box>
+            {formData.expirationDate && (
+              <Box sx={{ mb: 2.5 }}>
+                <Label>Expiration Date</Label>
+                <Value>{formData.expirationDate}</Value>
+              </Box>
+            )}
+          </>
+        )
+      default:
+        return null
+    }
+  }
+
+  const renderMedia = () => {
+    if (!formData?.evidenceLink) {
+      return (
+        <Box>
+          <Media>
+            <Image
+              src='/images/SkillMedia.svg'
+              alt='Featured Media'
+              width={160}
+              height={153}
+              style={{
+                borderRadius: '10px',
+                objectFit: 'cover'
+              }}
+            />
+          </Media>
+          <Typography
+            sx={{
+              fontFamily: 'Inter',
+              fontSize: '16px',
+              fontWeight: 500,
+              color: '#6b7280',
+              mt: 1,
+              textAlign: 'center'
+            }}
+          >
+            Featured Media
+          </Typography>
+        </Box>
+      )
+    }
+
+    return (
+      <Box>
+        <Media>
+          <Image
+            src={formData.evidenceLink}
+            alt='Featured Media'
+            width={160}
+            height={153}
+            style={{
+              borderRadius: '10px',
+              objectFit: 'cover'
+            }}
+          />
+        </Media>
+        <Typography
+          sx={{
+            fontFamily: 'Inter',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: '#6b7280',
+            mt: 1,
+            textAlign: 'center'
+          }}
+        >
+          Featured Media
+        </Typography>
+      </Box>
+    )
+  }
+
+  const renderSupportingDocs = () => {
+    if (!formData?.evidenceLink && !formData?.portfolio?.length) return null
+
+    const evidence = formData.evidenceLink
+    const portfolio = formData.portfolio || []
+    const hasUrls = evidence || portfolio.length > 0
+
+    if (!hasUrls) return null
+
+    return (
+      <Box sx={{ mb: 2.5 }}>
+        <Label>Supporting Documentation</Label>
+        <ul style={{ margin: 0, paddingLeft: '18px' }}>
+          {evidence && shouldDisplayUrl(evidence) && (
+            <li style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}>
+              <a
+                href={evidence}
+                target='_blank'
+                rel='noopener noreferrer'
+                style={{ color: '#6b7280' }}
+              >
+                {formData.supportingDocs || evidence}
+              </a>
+            </li>
+          )}
+          {portfolio.map(
+            (file: { name: string; url: string }, index: number) =>
+              file.name &&
+              file.url &&
+              shouldDisplayUrl(file.url) && (
+                <li
+                  key={index}
+                  style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}
+                >
+                  <a
+                    href={file.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    style={{ color: '#6b7280' }}
+                  >
+                    {file.name || file.url}
+                  </a>
+                </li>
+              )
+          )}
+        </ul>
+      </Box>
+    )
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
@@ -156,137 +470,28 @@ const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) =>
           gap: '20px'
         }}
       >
-        <Box sx={commonBoxStyles}>
-          <Typography
-            sx={{
-              ...commonTypographyStyles,
-              fontSize: '24px',
-              fontWeight: 700
-            }}
-          >
-            {formData.credentialName}
-          </Typography>
+        <Box sx={{ mb: 2.5 }}>
+          <Label sx={{ fontSize: '24px' }}>
+            {formData.credentialName ||
+              formData.volunteerWork ||
+              formData.role ||
+              formData.documentType ||
+              ''}
+          </Label>
           {formData.credentialDescription && (
-            <Box sx={commonTypographyStyles}>
+            <Value>
               <span
                 dangerouslySetInnerHTML={{
-                  __html: cleanHTML(formData.credentialDescription)
+                  __html: cleanHTML(formData.credentialDescription || '')
                 }}
               />
-            </Box>
+            </Value>
           )}
         </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: isLargeScreen ? 'row' : 'column',
-            gap: isLargeScreen ? '20px' : '10px',
-            mb: '10px'
-          }}
-        >
-          {formData?.evidenceLink ? (
-            selectedFiles.filter(f => f.isFeatured).length > 0 ? (
-              selectedFiles
-                .filter(f => f.isFeatured)
-                .map(file => (
-                  <Box key={file.id} sx={{ width: isLargeScreen ? '179px' : '100%' }}>
-                    {isPDF(file.name) ? (
-                      <img
-                        style={{
-                          borderRadius: '20px',
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                        src={pdfThumbnails[file.id] ?? '/fallback-pdf-thumbnail.svg'}
-                        alt='PDF Preview'
-                      />
-                    ) : isMP4(file.name) ? (
-                      <img
-                        style={{
-                          borderRadius: '20px',
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                        src={videoThumbnails[file.id] ?? '/fallback-video.png'}
-                        alt='Video Thumbnail'
-                      />
-                    ) : (
-                      <img
-                        style={{
-                          borderRadius: '20px',
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                        src={file.url}
-                        alt='Certification Evidence'
-                      />
-                    )}
-                  </Box>
-                ))
-            ) : (
-              <Box sx={{ width: !isLargeScreen ? '100%' : '179px', height: '100%' }} />
-            )
-          ) : (
-            <Box sx={{ width: !isLargeScreen ? '100%' : '179px', height: '100%' }} />
-          )}
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <Typography sx={commonTypographyStyles}>
-            <span
-              dangerouslySetInnerHTML={{
-                __html: cleanHTML(formData?.description as string)
-              }}
-            />
-          </Typography>
-          {formData.credentialDuration && (
-            <Typography sx={{ ...commonTypographyStyles, fontSize: '13px' }}>
-              Duration:
-              <br />
-              <ul>
-                <li style={{ marginLeft: '20px', width: 'fit-content' }}>
-                  {formData.credentialDuration}
-                </li>
-              </ul>
-            </Typography>
-          )}
 
-          {hasValidEvidence && (
-            <Box sx={commonTypographyStyles}>
-              <Typography sx={{ display: 'block' }}>Evidence:</Typography>
-              <ul style={evidenceListStyles}>
-                {formData.evidenceLink &&
-                  shouldDisplayUrl(formData.evidenceLink as string) && (
-                    <li
-                      style={{ cursor: 'pointer', width: 'fit-content' }}
-                      key={formData.evidenceLink}
-                      onClick={() =>
-                        handleNavigate(formData.evidenceLink as string, '_blank')
-                      }
-                    >
-                      {formData.evidenceLink}
-                    </li>
-                  )}
-                {formData.portfolio.map(
-                  (porto: { name: string; url: string }) =>
-                    porto.name &&
-                    porto.url &&
-                    (porto.name || shouldDisplayUrl(porto.url)) && (
-                      <li
-                        style={{ cursor: 'pointer', width: 'fit-content' }}
-                        key={porto.url}
-                        onClick={() => handleNavigate(porto.url, '_blank')}
-                      >
-                        {porto.name || porto.url}
-                      </li>
-                    )
-                )}
-              </ul>
-            </Box>
-          )}
-        </Box>
+        {renderMedia()}
+        {renderFormSpecificContent()}
+        {renderSupportingDocs()}
       </Box>
     </Box>
   )

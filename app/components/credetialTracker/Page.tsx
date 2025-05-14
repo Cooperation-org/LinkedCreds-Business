@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Box, Typography, Paper, styled, Card, CardContent } from '@mui/material'
 import { usePathname } from 'next/navigation'
 import { Logo } from '../../Assets/SVGs'
+import Image from 'next/image'
 
 const Header = styled(Paper)({
   width: '100%',
@@ -42,21 +43,14 @@ const Value = styled(Typography)({
   lineHeight: '24px',
   color: '#6b7280'
 })
-const Media = styled('div')({
+const Media = styled(Box)({
   width: '160.506px',
   height: '153.129px',
-  backgroundImage: 'url(/images/SkillMedia.svg)',
-  backgroundSize: '100% 100%',
-  backgroundRepeat: 'no-repeat'
+  position: 'relative',
+  borderRadius: '10px',
+  overflow: 'hidden',
+  margin: '0 auto'
 })
-
-const cleanHTML = (str: string) =>
-  str
-    .replace(/<p><br><\/p>/g, '')
-    .replace(/<p><\/p>/g, '')
-    .replace(/<br>/g, '')
-    .replace(/class="[^"]*"/g, '')
-    .replace(/style="[^"]*"/g, '')
 
 const BulletField = ({ label, value }: { label: string; value?: string }) => {
   const items = value?.split(/\n|,|•/).filter(Boolean) || []
@@ -85,11 +79,7 @@ const TextField = ({
 }) => (
   <Box sx={{ mb: 2.5 }}>
     <Label>{label}</Label>
-    {isHtml ? (
-      <Value dangerouslySetInnerHTML={{ __html: cleanHTML(value ?? '') }} />
-    ) : (
-      <Value>{value ?? 'To be completed...'}</Value>
-    )}
+    <Value>{value || 'To be completed...'}</Value>
   </Box>
 )
 
@@ -154,6 +144,154 @@ const cfg: Record<string, CFG> = {
 const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
   const conf = cfg[segment] || cfg.skill
+  const [timeAgo, setTimeAgo] = useState('just now')
+  const [lastChange, setLastChange] = useState(Date.now())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = Date.now()
+      const diff = now - lastChange
+
+      if (diff >= 10000) {
+        // 10 seconds
+        if (diff < 60000) {
+          // Less than 1 minute
+          setTimeAgo(`${Math.floor(diff / 1000)} seconds ago`)
+        } else if (diff < 3600000) {
+          // Less than 1 hour
+          setTimeAgo(`${Math.floor(diff / 60000)} minutes ago`)
+        } else if (diff < 86400000) {
+          // Less than 1 day
+          setTimeAgo(`${Math.floor(diff / 3600000)} hours ago`)
+        } else {
+          setTimeAgo(`${Math.floor(diff / 86400000)} days ago`)
+        }
+      }
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [lastChange])
+
+  useEffect(() => {
+    setLastChange(Date.now())
+    setTimeAgo('just now')
+  }, [formData])
+
+  const renderSupportingDocs = () => {
+    if (!formData?.evidenceLink && !formData?.portfolio?.length) return null
+
+    const evidence = formData.evidenceLink
+    const portfolio = formData.portfolio || []
+    const hasUrls = evidence || portfolio.length > 0
+
+    if (!hasUrls) return null
+
+    const shouldDisplayUrl = (url: string): boolean => {
+      return !url.includes('drive.google.com/uc?export=view')
+    }
+
+    return (
+      <Box sx={{ mb: 2.5 }}>
+        <Label>Supporting Documentation</Label>
+        <ul style={{ margin: 0, paddingLeft: '18px' }}>
+          {evidence && shouldDisplayUrl(evidence) && (
+            <li style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}>
+              <a
+                href={evidence}
+                target='_blank'
+                rel='noopener noreferrer'
+                style={{ color: '#6b7280' }}
+              >
+                {formData.supportingDocs || evidence}
+              </a>
+            </li>
+          )}
+          {portfolio.map(
+            (file: any, index: number) =>
+              file.name &&
+              file.url &&
+              shouldDisplayUrl(file.url) && (
+                <li
+                  key={index}
+                  style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}
+                >
+                  <a
+                    href={file.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    style={{ color: '#6b7280' }}
+                  >
+                    {file.name || file.url}
+                  </a>
+                </li>
+              )
+          )}
+        </ul>
+      </Box>
+    )
+  }
+
+  const renderMedia = () => {
+    if (!formData?.evidenceLink) {
+      return (
+        <Box>
+          <Media>
+            <Image
+              src='/images/SkillMedia.svg'
+              alt='Featured Media'
+              width={160}
+              height={153}
+              style={{
+                borderRadius: '10px',
+                objectFit: 'cover'
+              }}
+            />
+          </Media>
+          <Typography
+            sx={{
+              fontFamily: 'Inter',
+              fontSize: '16px',
+              fontWeight: 500,
+              color: '#6b7280',
+              mt: 1,
+              textAlign: 'center'
+            }}
+          >
+            Featured Media
+          </Typography>
+        </Box>
+      )
+    }
+
+    return (
+      <Box>
+        <Media>
+          <Image
+            src={formData.evidenceLink}
+            alt='Featured Media'
+            width={160}
+            height={153}
+            style={{
+              borderRadius: '10px',
+              objectFit: 'cover'
+            }}
+          />
+        </Media>
+        <Typography
+          sx={{
+            fontFamily: 'Inter',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: '#6b7280',
+            mt: 1,
+            textAlign: 'center'
+          }}
+        >
+          Featured Media
+        </Typography>
+      </Box>
+    )
+  }
 
   return (
     <Box sx={{ p: 0, width: '100%', maxWidth: '720px' }}>
@@ -182,7 +320,7 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
                   color: '#202e5b'
                 }}
               >
-                {formData?.fullName ?? 'User'} - just now
+                {formData?.fullName ?? 'User'} - {timeAgo}
               </Typography>
             </Box>
           </Box>
@@ -203,18 +341,8 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
                     />
                   )
                 )}
-                <Media />
-                <Typography
-                  sx={{
-                    fontFamily: 'Inter',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    color: '#6b7280',
-                    mt: 1
-                  }}
-                >
-                  Media (optional)
-                </Typography>
+                {renderMedia()}
+                {renderSupportingDocs()}
               </Box>
             </CardContent>
           </PreviewCard>
