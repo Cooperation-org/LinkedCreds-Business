@@ -1,3 +1,4 @@
+'use client'
 import React, {
   createContext,
   useContext,
@@ -7,7 +8,6 @@ import React, {
   useCallback
 } from 'react'
 
-// Define the context structure
 interface StepContextType {
   activeStep: number
   loading: boolean
@@ -32,10 +32,13 @@ export const StepProvider = ({ children }: { children: React.ReactNode }) => {
     () => async () => {}
   )
   const [loading, setLoading] = useState(false)
+
   const excludedPaths = useMemo(
     () => ['/', '/privacy', '/accessibility', '/terms', '/claims'],
     []
   )
+
+  const getStorageKey = (pathname: string) => `activeStep-${pathname}`
 
   const getStepFromHash = () => {
     const hash = window.location.hash
@@ -47,24 +50,18 @@ export const StepProvider = ({ children }: { children: React.ReactNode }) => {
     const updateActiveStep = () => {
       const pathname = window.location.pathname
       const hashStep = getStepFromHash()
-      const savedStep = localStorage.getItem('activeStep')
+      const savedStep = localStorage.getItem(getStorageKey(pathname))
 
-      if (excludedPaths.includes(pathname)) {
-        return
-      } else if (hashStep !== null) {
-        setActiveStep(hashStep)
-      } else if (savedStep) {
-        setActiveStep(Number(savedStep))
-      } else {
-        setActiveStep(0)
-      }
+      if (excludedPaths.includes(pathname)) return
+
+      if (hashStep !== null) setActiveStep(hashStep)
+      else if (savedStep) setActiveStep(Number(savedStep))
+      else setActiveStep(0)
     }
 
     updateActiveStep()
 
-    const handleLocationChange = () => {
-      updateActiveStep()
-    }
+    const handleLocationChange = () => updateActiveStep()
 
     window.addEventListener('popstate', handleLocationChange)
     window.addEventListener('hashchange', handleLocationChange)
@@ -75,44 +72,42 @@ export const StepProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [excludedPaths])
 
-  // Update localStorage and URL hash when the active step changes
   useEffect(() => {
-    if (excludedPaths.includes(window.location.pathname)) {
-      return
-    }
+    const pathname = window.location.pathname
+    if (excludedPaths.includes(pathname)) return
 
-    localStorage.setItem('activeStep', String(activeStep))
+    localStorage.setItem(getStorageKey(pathname), String(activeStep))
     window.location.hash = `#step${activeStep}`
   }, [activeStep, excludedPaths])
 
   const handleNext = useCallback(async () => {
     if (activeStep === 3 && typeof uploadImageFn === 'function') {
-      setLoading(true) // Start loading
+      setLoading(true)
       try {
-        await uploadImageFn() // Wait for image upload to complete
+        await uploadImageFn()
       } catch (error) {
         console.error('Error during image upload:', error)
       } finally {
-        setLoading(false) // End loading
+        setLoading(false)
       }
     }
-    setActiveStep(prevStep => prevStep + 1) // Move to the next step
+    setActiveStep(prev => prev + 1)
   }, [activeStep, uploadImageFn])
 
   const handleBack = useCallback(() => {
-    setActiveStep(prevStep => (prevStep > 0 ? prevStep - 1 : 0))
+    setActiveStep(prev => (prev > 0 ? prev - 1 : 0))
   }, [])
 
   const contextValue = useMemo(
     () => ({
       activeStep,
+      loading,
       setActiveStep,
       handleNext,
       handleBack,
-      setUploadImageFn,
-      loading
+      setUploadImageFn
     }),
-    [activeStep, handleNext, handleBack, setUploadImageFn, loading]
+    [activeStep, loading, handleNext, handleBack]
   )
 
   return <StepContext.Provider value={contextValue}>{children}</StepContext.Provider>

@@ -4,7 +4,7 @@ import React, { useRef, useState, useCallback } from 'react'
 import { Box, Typography, styled, Card, Snackbar, Alert } from '@mui/material'
 import FileListDisplay from './FileList'
 import { SVGUploadMedia } from '../Assets/SVGs'
-import { FileItem } from '../skillform/form/types/Types'
+import { FileItem } from '../[formType]/form/types/Types'
 
 const CardStyle = styled(Card)({
   padding: '40px 20px',

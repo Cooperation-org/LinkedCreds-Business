@@ -2,6 +2,7 @@
 import React, { useCallback, useRef } from 'react'
 import { Box } from '@mui/material'
 import dynamic from 'next/dynamic'
+import { useParams } from 'next/navigation'
 
 const DynamicForm = dynamic(() => import('./form/Form'), {
   ssr: false,
@@ -9,6 +10,7 @@ const DynamicForm = dynamic(() => import('./form/Form'), {
 })
 
 const FormComponent = () => {
+  const { formType } = useParams<{ formType: string }>()
   const formRef = useRef<HTMLDivElement>(null)
 
   const handleScrollToTop = useCallback(() => {
@@ -18,7 +20,7 @@ const FormComponent = () => {
         formRef.current?.scrollIntoView({ behavior: 'smooth' })
       }, 10)
     }
-  }, [formRef])
+  }, [])
 
   return (
     <Box
@@ -33,7 +35,7 @@ const FormComponent = () => {
         overflow: 'auto'
       }}
     >
-      <DynamicForm onStepChange={handleScrollToTop} />
+      <DynamicForm formType={formType as string} onStepChange={handleScrollToTop} />
     </Box>
   )
 }
