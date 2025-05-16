@@ -115,24 +115,6 @@ const CredentialCard = ({
           {secondaryLabel}
         </Typography>
       )}
-
-      {isDisabled && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            backgroundColor: '#F43F5E',
-            color: 'white',
-            borderRadius: '4px',
-            padding: '4px 8px',
-            fontSize: '10px',
-            fontWeight: 'bold'
-          }}
-        >
-          Coming Soon
-        </Box>
-      )}
     </Box>
   )
 
@@ -148,13 +130,7 @@ const CredentialCard = ({
 }
 
 export default function NewCredentialPage() {
-  const [disabledCredentials] = useState<CredentialType[]>([
-    'employment',
-    'volunteering',
-    'performanceReview',
-    'identityVerification'
-  ])
-
+  const [disabledCredentials] = useState<CredentialType[]>([])
   const [selectedCredential, setSelectedCredential] = useState<CredentialType>(null)
   const router = useRouter()
   const isXsOnly = useMediaQuery('(max-width:599px)')
@@ -168,15 +144,13 @@ export default function NewCredentialPage() {
 
   const handleContinue = () => {
     if (!selectedCredential) return
-
-    const routes = {
-      employment: '/employmentform',
-      volunteering: '/volunteeringform',
-      performanceReview: '/performanceReviewform',
-      skill: '/skillform',
-      identityVerification: '/identityVerificationform'
+    const routes: Record<string, string> = {
+      employment: '/role',
+      volunteering: '/volunteer',
+      performanceReview: '/performance-review',
+      skill: '/skill',
+      identityVerification: '/identity-verification'
     }
-
     router.push(routes[selectedCredential])
   }
 
@@ -191,7 +165,7 @@ export default function NewCredentialPage() {
       type: 'volunteering',
       title: 'Volunteering',
       icon: <VolunteerOrganizationIcon />,
-      description: 'Supported file types'
+      description: 'Document volunteering work'
     },
     {
       type: 'performanceReview',
@@ -214,10 +188,7 @@ export default function NewCredentialPage() {
             component='img'
             src={IdCardsIconsImg.src}
             alt='Identity verification'
-            sx={{
-              width: 'auto',
-              height: '80px'
-            }}
+            sx={{ width: 'auto', height: '80px' }}
           />
         </Box>
       ),
@@ -225,11 +196,32 @@ export default function NewCredentialPage() {
     }
   ]
 
-  const renderMobileLayout = () => {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%' }}>
-        {credentialOptions.map(option => (
-          <Box key={option.type} sx={{ width: '100%', maxWidth: '440px', mx: 'auto' }}>
+  const renderMobileLayout = () => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%' }}>
+      {credentialOptions.map(option => (
+        <Box key={option.type} sx={{ width: '100%', maxWidth: '440px', mx: 'auto' }}>
+          <CredentialCard
+            title={option.title}
+            icon={option.icon}
+            description={option.description}
+            secondaryLabel={option.secondaryLabel}
+            isSelected={selectedCredential === option.type}
+            isDisabled={disabledCredentials.includes(option.type)}
+            onClick={() => handleSelectCredential(option.type)}
+          />
+        </Box>
+      ))}
+    </Box>
+  )
+
+  const renderTabletLayout = () => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '30px' }}>
+        {credentialOptions.slice(0, 4).map(option => (
+          <Box
+            key={option.type}
+            sx={{ width: '100%', maxWidth: '440px', justifySelf: 'center' }}
+          >
             <CredentialCard
               title={option.title}
               icon={option.icon}
@@ -242,98 +234,59 @@ export default function NewCredentialPage() {
           </Box>
         ))}
       </Box>
-    )
-  }
-
-  const renderTabletLayout = () => {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%' }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '30px' }}>
-          {credentialOptions.slice(0, 4).map(option => (
-            <Box
-              key={option.type}
-              sx={{ width: '100%', maxWidth: '440px', justifySelf: 'center' }}
-            >
-              <CredentialCard
-                title={option.title}
-                icon={option.icon}
-                description={option.description}
-                secondaryLabel={option.secondaryLabel}
-                isSelected={selectedCredential === option.type}
-                isDisabled={disabledCredentials.includes(option.type)}
-                onClick={() => handleSelectCredential(option.type)}
-              />
-            </Box>
-          ))}
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ width: '100%', maxWidth: '440px' }}>
+          <CredentialCard
+            title={credentialOptions[4].title}
+            icon={credentialOptions[4].icon}
+            description={credentialOptions[4].description}
+            secondaryLabel={credentialOptions[4].secondaryLabel}
+            isSelected={selectedCredential === credentialOptions[4].type}
+            isDisabled={disabledCredentials.includes(credentialOptions[4].type)}
+            onClick={() => handleSelectCredential(credentialOptions[4].type)}
+          />
         </Box>
+      </Box>
+    </Box>
+  )
 
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Box sx={{ width: '100%', maxWidth: '440px' }}>
+  const renderDesktopLayout = () => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '30px' }}>
+        {credentialOptions.slice(0, 3).map(option => (
+          <Box
+            key={option.type}
+            sx={{ width: '100%', maxWidth: '440px', justifySelf: 'center' }}
+          >
             <CredentialCard
-              title={credentialOptions[4].title}
-              icon={credentialOptions[4].icon}
-              description={credentialOptions[4].description}
-              secondaryLabel={credentialOptions[4].secondaryLabel}
-              isSelected={selectedCredential === credentialOptions[4].type}
-              isDisabled={disabledCredentials.includes(credentialOptions[4].type)}
-              onClick={() => handleSelectCredential(credentialOptions[4].type)}
+              title={option.title}
+              icon={option.icon}
+              description={option.description}
+              secondaryLabel={option.secondaryLabel}
+              isSelected={selectedCredential === option.type}
+              isDisabled={disabledCredentials.includes(option.type)}
+              onClick={() => handleSelectCredential(option.type)}
             />
           </Box>
-        </Box>
+        ))}
       </Box>
-    )
-  }
-
-  const renderDesktopLayout = () => {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%' }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '30px' }}>
-          {credentialOptions.slice(0, 3).map(option => (
-            <Box
-              key={option.type}
-              sx={{
-                width: '100%',
-                maxWidth: '440px',
-                justifySelf: 'center'
-              }}
-            >
-              <CredentialCard
-                title={option.title}
-                icon={option.icon}
-                description={option.description}
-                secondaryLabel={option.secondaryLabel}
-                isSelected={selectedCredential === option.type}
-                isDisabled={disabledCredentials.includes(option.type)}
-                onClick={() => handleSelectCredential(option.type)}
-              />
-            </Box>
-          ))}
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: '30px' }}>
-          {credentialOptions.slice(3, 5).map(option => (
-            <Box
-              key={option.type}
-              sx={{
-                width: '100%',
-                maxWidth: '440px'
-              }}
-            >
-              <CredentialCard
-                title={option.title}
-                icon={option.icon}
-                description={option.description}
-                secondaryLabel={option.secondaryLabel}
-                isSelected={selectedCredential === option.type}
-                isDisabled={disabledCredentials.includes(option.type)}
-                onClick={() => handleSelectCredential(option.type)}
-              />
-            </Box>
-          ))}
-        </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: '30px' }}>
+        {credentialOptions.slice(3, 5).map(option => (
+          <Box key={option.type} sx={{ width: '100%', maxWidth: '440px' }}>
+            <CredentialCard
+              title={option.title}
+              icon={option.icon}
+              description={option.description}
+              secondaryLabel={option.secondaryLabel}
+              isSelected={selectedCredential === option.type}
+              isDisabled={disabledCredentials.includes(option.type)}
+              onClick={() => handleSelectCredential(option.type)}
+            />
+          </Box>
+        ))}
       </Box>
-    )
-  }
+    </Box>
+  )
 
   return (
     <Box
@@ -355,7 +308,6 @@ export default function NewCredentialPage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
           width: '100%',
           mb: { xs: 4, md: 6 }
         }}
@@ -384,19 +336,11 @@ export default function NewCredentialPage() {
           What type of credential do you want to create?
         </Typography>
       </Box>
-
-      <Box
-        sx={{
-          width: '100%',
-          mt: { xs: 4, md: '15vh' },
-          mb: { xs: 4, md: '15vh' }
-        }}
-      >
+      <Box sx={{ width: '100%', mt: { xs: 4, md: '15vh' }, mb: { xs: 4, md: '15vh' } }}>
         {isXsOnly && renderMobileLayout()}
         {isSmToMd && renderTabletLayout()}
         {isLgUp && renderDesktopLayout()}
       </Box>
-
       <Box
         sx={{
           display: 'flex',
@@ -424,13 +368,8 @@ export default function NewCredentialPage() {
             height: { xs: '40px', md: '66px' },
             width: { xs: '100%', md: '136px' },
             fontWeight: 700,
-            '&:hover': {
-              backgroundColor: '#003FE0'
-            },
-            '&.Mui-disabled': {
-              backgroundColor: '#B5B5B5',
-              color: '#2E2E48'
-            },
+            '&:hover': { backgroundColor: '#003FE0' },
+            '&.Mui-disabled': { backgroundColor: '#B5B5B5', color: '#2E2E48' },
             fontFamily: 'Nunito Sans',
             fontSize: '18px'
           }}

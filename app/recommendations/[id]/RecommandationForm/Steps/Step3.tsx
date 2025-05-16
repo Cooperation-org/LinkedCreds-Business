@@ -5,10 +5,10 @@ import { Box, Typography, styled, Card } from '@mui/material'
 
 import MediaUploadSection from '../../../../components/MediaUploadSection'
 import useGoogleDrive from '../../../../hooks/useGoogleDrive'
-import { useStepContext } from '../../../../skillform/form/StepContext'
+import { useStepContext } from '../../../../[formType]/form/StepContext'
 import LoadingOverlay from '../../../../components/Loading/LoadingOverlay'
 import { TasksVector, SVGUplaodLink } from '../../../../Assets/SVGs'
-import { FileItem } from '../../../../skillform/form/types/Types'
+import { FileItem } from '../../../../[formType]/form/types/Types'
 import LinkAdder from '../../../../components/LinkAdder'
 import { formLabelStyles } from '../../../../components/Styles/appStyles'
 

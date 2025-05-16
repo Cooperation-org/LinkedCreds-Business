@@ -23,7 +23,7 @@ import {
   SVGEmail
 } from '../../../Assets/SVGs'
 import LoadingOverlay from '../../../components/Loading/LoadingOverlay'
-import { FormData } from '../../../skillform/form/types/Types'
+import { FormData } from '../../../[formType]/form/types/Types'
 import { copyFormValuesToClipboard } from '../../../utils/formUtils'
 import { useStepContext } from '../StepContext'
 import { useRouter } from 'next/navigation'

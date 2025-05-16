@@ -1,133 +1,312 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Box, Typography, Paper, styled, Card, CardContent } from '@mui/material'
-import { FormData } from '../../skillform/form/types/Types'
+import { usePathname } from 'next/navigation'
 import { Logo } from '../../Assets/SVGs'
+import Image from 'next/image'
 
-// Styled components
-const HeaderContainer = styled(Paper)(({ theme }) => ({
+const Header = styled(Paper)({
   width: '100%',
   maxWidth: '720px',
   padding: '30px',
   borderRadius: '20px 20px 0 0',
-  borderLeft: '1px solid #d1e4ff',
-  borderRight: '1px solid #d1e4ff',
-  borderBottom: '1px solid #d1e4ff',
+  border: '1px solid #d1e4ff',
   display: 'flex',
   alignItems: 'center'
-}))
-
-const MainContentContainer = styled(Box)(({ theme }) => ({
+})
+const Body = styled(Box)({
   width: '100%',
   maxWidth: '720px',
   padding: '45px 30px',
   backgroundColor: '#87abe4',
   borderRadius: '0 0 20px 20px',
-  borderTop: '1px solid #d1e4ff',
-  borderLeft: '1px solid #d1e4ff',
-  borderRight: '1px solid #d1e4ff',
+  border: '1px solid #d1e4ff',
   margin: '0 auto'
-}))
-
-const SkillCard = styled(Card)(({ theme }) => ({
+})
+const PreviewCard = styled(Card)({
   padding: '15px 30px',
   backgroundColor: '#fff',
   borderRadius: '10px',
   border: '1px solid #003fe0',
   width: '100%'
-}))
-
-const FieldLabel = styled(Typography)(({ theme }) => ({
+})
+const Label = styled(Typography)({
   fontFamily: 'Inter',
   fontSize: '16px',
   fontWeight: 700,
   lineHeight: '24px',
-  color: '#000e40',
-  letterSpacing: '0.08px'
-}))
-
-const FieldValue = styled(Typography)(({ theme }) => ({
+  color: '#000e40'
+})
+const Value = styled(Typography)({
   fontFamily: 'Inter',
   fontSize: '16px',
   fontWeight: 400,
   lineHeight: '24px',
-  color: '#6b7280',
-  letterSpacing: '0.08px'
-}))
-
-const MediaContainer = styled(Box)(({ theme }) => ({
-  height: '180px',
-  width: '100%',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  flexDirection: 'column'
-}))
-
-const IconImage = styled('div')({
-  width: '38px',
-  height: '38px',
-  backgroundImage:
-    'url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-04-09/PnoGJMohCj.png)',
-  backgroundSize: 'cover',
-  backgroundRepeat: 'no-repeat'
+  color: '#6b7280'
 })
-
-const SkillMedia = styled('div')({
+const Media = styled(Box)({
   width: '160.506px',
   height: '153.129px',
-  backgroundImage:
-    'url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-04-09/usRRv5nxOd.png)',
-  backgroundSize: '100% 100%',
-  backgroundRepeat: 'no-repeat'
+  position: 'relative',
+  borderRadius: '10px',
+  overflow: 'hidden',
+  margin: '0 auto'
 })
 
-// Field component for consistent styling
-interface FieldProps {
+const BulletField = ({ label, value }: { label: string; value?: string }) => {
+  const items = value?.split(/\n|,|•/).filter(Boolean) || []
+  return (
+    <Box sx={{ mb: 2.5 }}>
+      <Label>{label}</Label>
+      <ul style={{ margin: 0, paddingLeft: '18px' }}>
+        {items.map((t, i) => (
+          <li key={i} style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}>
+            {t.trim()}
+          </li>
+        ))}
+      </ul>
+    </Box>
+  )
+}
+
+const TextField = ({
+  label,
+  value,
+  isHtml
+}: {
   label: string
   value?: string
   isHtml?: boolean
-}
-
-const Field: React.FC<FieldProps> = ({ label, value, isHtml }) => (
+}) => (
   <Box sx={{ mb: 2.5 }}>
-    <FieldLabel>{label}</FieldLabel>
-    {isHtml && value ? (
-      <FieldValue>
-        <span dangerouslySetInnerHTML={{ __html: value }} />
-      </FieldValue>
-    ) : (
-      <FieldValue>{value || 'To be completed...'}</FieldValue>
-    )}
+    <Label>{label}</Label>
+    <Value>{value || 'To be completed...'}</Value>
   </Box>
 )
 
-interface CredentialTrackerProps {
-  formData?: FormData
+interface TrackerProps {
+  formData?: Record<string, any>
 }
 
-const CredentialTracker: React.FC<CredentialTrackerProps> = ({ formData }) => {
+type F = { label: string; key: string; isHtml?: boolean; bullet?: boolean }
+
+type CFG = { fields: F[] }
+
+const cfg: Record<string, CFG> = {
+  skill: {
+    fields: [
+      { label: 'Skill Name', key: 'credentialName' },
+      { label: 'Skill Description', key: 'credentialDescription', isHtml: true },
+      { label: 'Earning Criteria', key: 'description', isHtml: true },
+      { label: 'Duration', key: 'credentialDuration' },
+      { label: 'Supporting Documentation', key: 'supportingDocs' }
+    ]
+  },
+  'performance-review': {
+    fields: [
+      { label: 'Company you work for', key: 'company' },
+      { label: 'Your Role', key: 'role' },
+      { label: 'Name of Employee', key: 'employeeName' },
+      { label: 'Employee job title', key: 'employeeJobTitle' },
+      { label: 'Review Comments', key: 'reviewComments', isHtml: true },
+      { label: 'Overall Rating', key: 'overallRating' },
+      { label: 'Goals for Next Period', key: 'goalsNext', isHtml: true },
+      { label: 'Review Dates', key: 'reviewDates' }
+    ]
+  },
+  role: {
+    fields: [
+      { label: 'Your Role', key: 'role' },
+      { label: 'Company you work for', key: 'company' },
+      { label: 'Supporting Documentation', key: 'supportingDocs' }
+    ]
+  },
+  volunteer: {
+    fields: [
+      { label: 'Volunteer Role', key: 'volunteerWork' },
+      { label: 'Volunteer Organization', key: 'volunteerOrg' },
+      { label: 'Volunteer Description', key: 'volunteerDescription', isHtml: true },
+      { label: 'Skills gained through volunteering', key: 'skillsGained', bullet: true },
+      { label: 'Duration', key: 'duration' },
+      { label: 'Volunteer Dates', key: 'volunteerDates' }
+    ]
+  },
+  'identity-verification': {
+    fields: [
+      { label: 'Document Type', key: 'documentType' },
+      { label: 'Document Number', key: 'documentNumber' },
+      { label: 'Issuing Country', key: 'issuingCountry' },
+      { label: 'Expiration Date', key: 'expirationDate' },
+      { label: 'Supporting Documentation', key: 'supportingDocs' }
+    ]
+  }
+}
+
+const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
+  const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
+  const conf = cfg[segment] || cfg.skill
+  const [timeAgo, setTimeAgo] = useState('just now')
+  const [lastChange, setLastChange] = useState(Date.now())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = Date.now()
+      const diff = now - lastChange
+
+      if (diff >= 10000) {
+        // 10 seconds
+        if (diff < 60000) {
+          // Less than 1 minute
+          setTimeAgo(`${Math.floor(diff / 1000)} seconds ago`)
+        } else if (diff < 3600000) {
+          // Less than 1 hour
+          setTimeAgo(`${Math.floor(diff / 60000)} minutes ago`)
+        } else if (diff < 86400000) {
+          // Less than 1 day
+          setTimeAgo(`${Math.floor(diff / 3600000)} hours ago`)
+        } else {
+          setTimeAgo(`${Math.floor(diff / 86400000)} days ago`)
+        }
+      }
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [lastChange])
+
+  useEffect(() => {
+    setLastChange(Date.now())
+    setTimeAgo('just now')
+  }, [formData])
+
+  const renderSupportingDocs = () => {
+    if (!formData?.evidenceLink && !formData?.portfolio?.length) return null
+
+    const evidence = formData.evidenceLink
+    const portfolio = formData.portfolio || []
+    const hasUrls = evidence || portfolio.length > 0
+
+    if (!hasUrls) return null
+
+    const shouldDisplayUrl = (url: string): boolean => {
+      return !url.includes('drive.google.com/uc?export=view')
+    }
+
+    return (
+      <Box sx={{ mb: 2.5 }}>
+        <Label>Supporting Documentation</Label>
+        <ul style={{ margin: 0, paddingLeft: '18px' }}>
+          {evidence && shouldDisplayUrl(evidence) && (
+            <li style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}>
+              <a
+                href={evidence}
+                target='_blank'
+                rel='noopener noreferrer'
+                style={{ color: '#6b7280' }}
+              >
+                {formData.supportingDocs || evidence}
+              </a>
+            </li>
+          )}
+          {portfolio.map(
+            (file: any, index: number) =>
+              file.name &&
+              file.url &&
+              shouldDisplayUrl(file.url) && (
+                <li
+                  key={index}
+                  style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}
+                >
+                  <a
+                    href={file.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    style={{ color: '#6b7280' }}
+                  >
+                    {file.name || file.url}
+                  </a>
+                </li>
+              )
+          )}
+        </ul>
+      </Box>
+    )
+  }
+
+  const renderMedia = () => {
+    if (!formData?.evidenceLink) {
+      return (
+        <Box>
+          <Media>
+            <Image
+              src='/images/SkillMedia.svg'
+              alt='Featured Media'
+              width={160}
+              height={153}
+              style={{
+                borderRadius: '10px',
+                objectFit: 'cover'
+              }}
+            />
+          </Media>
+          <Typography
+            sx={{
+              fontFamily: 'Inter',
+              fontSize: '16px',
+              fontWeight: 500,
+              color: '#6b7280',
+              mt: 1,
+              textAlign: 'center'
+            }}
+          >
+            Featured Media
+          </Typography>
+        </Box>
+      )
+    }
+
+    return (
+      <Box>
+        <Media>
+          <Image
+            src={formData.evidenceLink}
+            alt='Featured Media'
+            width={160}
+            height={153}
+            style={{
+              borderRadius: '10px',
+              objectFit: 'cover'
+            }}
+          />
+        </Media>
+        <Typography
+          sx={{
+            fontFamily: 'Inter',
+            fontSize: '16px',
+            fontWeight: 500,
+            color: '#6b7280',
+            mt: 1,
+            textAlign: 'center'
+          }}
+        >
+          Featured Media
+        </Typography>
+      </Box>
+    )
+  }
+
   return (
     <Box sx={{ p: 0, width: '100%', maxWidth: '720px' }}>
       <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: '100%',
-          margin: '0 auto'
-        }}
+        sx={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '0 auto' }}
       >
-        {/* Header Section */}
-        <HeaderContainer elevation={0}>
+        <Header elevation={0}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
             <Logo />
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Box>
               <Typography
-                variant='h5'
                 sx={{
                   fontFamily: 'Lato',
                   fontSize: '32px',
                   fontWeight: 700,
-                  lineHeight: '38px',
                   color: '#202e5b'
                 }}
               >
@@ -138,66 +317,36 @@ const CredentialTracker: React.FC<CredentialTrackerProps> = ({ formData }) => {
                   fontFamily: 'Inter',
                   fontSize: '16px',
                   fontWeight: 400,
-                  lineHeight: '24px',
-                  color: '#202e5b',
-                  letterSpacing: '0.08px'
+                  color: '#202e5b'
                 }}
               >
-                {formData?.fullName || 'User'} - just now
+                {formData?.fullName ?? 'User'} - {timeAgo}
               </Typography>
             </Box>
           </Box>
-        </HeaderContainer>
-
-        {/* Main Content Section */}
-        <MainContentContainer>
-          <Box sx={{ width: '100%', mb: 6 }}>
-            <SkillCard>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                  <Field label='Skill Name' value={formData?.credentialName} />
-                  <Field
-                    label='Skill Description'
-                    value={formData?.credentialDescription as string}
-                    isHtml={true}
-                  />
-
-                  <MediaContainer>
-                    <SkillMedia />
-                    <Typography
-                      sx={{
-                        fontFamily: 'Inter',
-                        fontSize: '16px',
-                        fontWeight: 500,
-                        lineHeight: '24px',
-                        color: '#6b7280',
-                        letterSpacing: '0.08px',
-                        mt: 1
-                      }}
-                    >
-                      Media (optional)
-                    </Typography>
-                  </MediaContainer>
-
-                  <Field
-                    label='Earning Criteria'
-                    value={formData?.description as string}
-                    isHtml={true}
-                  />
-                  <Field label='Duration' value={formData?.credentialDuration} />
-                  <Field
-                    label='Supporting Documentation'
-                    value={
-                      formData?.evidenceLink || formData?.portfolio?.length
-                        ? 'Provided'
-                        : undefined
-                    }
-                  />
-                </Box>
-              </CardContent>
-            </SkillCard>
-          </Box>
-        </MainContentContainer>
+        </Header>
+        <Body>
+          <PreviewCard>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                {conf.fields.map(f =>
+                  f.bullet ? (
+                    <BulletField key={f.key} label={f.label} value={formData?.[f.key]} />
+                  ) : (
+                    <TextField
+                      key={f.key}
+                      label={f.label}
+                      value={formData?.[f.key]}
+                      isHtml={f.isHtml}
+                    />
+                  )
+                )}
+                {renderMedia()}
+                {renderSupportingDocs()}
+              </Box>
+            </CardContent>
+          </PreviewCard>
+        </Body>
       </Box>
     </Box>
   )
