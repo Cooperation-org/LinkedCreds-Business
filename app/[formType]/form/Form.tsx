@@ -233,6 +233,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
                     watch={watch}
                     control={control}
                     errors={errors}
+                    setValue={undefined}
                   />
                 </Box>
               </Slide>
