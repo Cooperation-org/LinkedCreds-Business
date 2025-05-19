@@ -12,7 +12,6 @@ import {
   Checkbox
 } from '@mui/material'
 import { Controller, FieldErrors, FieldPath, UseFormRegister } from 'react-hook-form'
-import { usePathname } from 'next/navigation'
 import {
   inputPropsStyles,
   TextFieldStyles,
@@ -30,6 +29,7 @@ interface Step2Props {
   control: any
   errors: FieldErrors<FormData>
   setValue: any
+  formType: string
 }
 
 const skillsList = [
@@ -151,10 +151,10 @@ export function Step2({
   watch,
   control,
   errors,
-  setValue
+  setValue,
+  formType
 }: Readonly<Step2Props>) {
-  const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
-  const config = formConfigs[segment] || formConfigs.skill
+  const config = formConfigs[formType] || formConfigs.skill
 
   const renderInputField = (field: FieldDef) => {
     const placeholder = `Example: ${field.label
@@ -256,7 +256,7 @@ export function Step2({
       </Typography>
       <StepTrackShape />
 
-      {segment !== 'volunteer' &&
+      {formType !== 'volunteer' &&
         config.fields.map(f => (
           <Box key={f.name} sx={{ width: '100%' }}>
             <FormLabel sx={formLabelStyles}>{f.label}</FormLabel>
@@ -264,7 +264,7 @@ export function Step2({
           </Box>
         ))}
 
-      {segment === 'volunteer' && (
+      {formType === 'volunteer' && (
         <>
           {config.fields.slice(0, 3).map(f => (
             <Box key={f.name} sx={{ width: '100%' }}>

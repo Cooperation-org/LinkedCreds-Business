@@ -34,6 +34,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility'
 import useGoogleDrive from '../hooks/useGoogleDrive'
 import LoadingOverlay from '../components/Loading/LoadingOverlay'
 import ComprehensiveClaimDetails from '../view/[id]/ComprehensiveClaimDetails'
+import { updateClickRates } from '../firebase/firestore'
 
 import {
   SVGHeart,
@@ -208,6 +209,7 @@ const ClaimsPageClient: React.FC = () => {
 
   const { data: session } = useSession()
   const accessToken = session?.accessToken
+  const userEmail = session?.user?.email
   const { storage } = useGoogleDrive()
   const router = useRouter()
   const theme = useTheme()
@@ -218,6 +220,9 @@ const ClaimsPageClient: React.FC = () => {
     const url = `${window.location.origin}/askforrecommendation/${claimId}`
     await navigator.clipboard.writeText(url)
     router.push(`/askforrecommendation/${claimId}`)
+    if (userEmail) {
+      updateClickRates(userEmail, 'requestRecommendation')
+    }
   }
 
   const handleViewClaimClick = (claimId: string, e?: React.MouseEvent) => {
@@ -238,6 +243,9 @@ const ClaimsPageClient: React.FC = () => {
     e?.stopPropagation()
     const claimId = claim.id.id
     const mailPageUrl = `${window.location.origin}/mail/${claimId}`
+    if (userEmail) {
+      updateClickRates(userEmail, 'shareCredential')
+    }
     window.location.href = mailPageUrl
   }
   const handleDesktopMenuOpen = (event: React.MouseEvent<HTMLElement>, claim: any) => {
@@ -266,6 +274,9 @@ const ClaimsPageClient: React.FC = () => {
   const handleLinkedInShare = (claim: any) => {
     const linkedInUrl = generateLinkedInUrl(claim)
     window.open(linkedInUrl, '_blank')
+    if (userEmail) {
+      updateClickRates(userEmail, 'shareCredential')
+    }
   }
 
   const handleDesktopMenuClose = () => {
