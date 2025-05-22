@@ -246,6 +246,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
                   selectedFiles={selectedFiles}
                   setSelectedFiles={setSelectedFiles}
                   setValue={setValue}
+                  formType={formType}
                 />
               </Box>
             )}

@@ -231,37 +231,10 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => 
   }
 
   const renderMedia = () => {
-    if (!formData?.evidenceLink) {
-      return (
-        <Box>
-          <Media>
-            <Image
-              src='/images/SkillMedia.svg'
-              alt='Featured Media'
-              width={160}
-              height={153}
-              style={{
-                borderRadius: '10px',
-                objectFit: 'cover'
-              }}
-            />
-          </Media>
-          <Typography
-            sx={{
-              fontFamily: 'Inter',
-              fontSize: '16px',
-              fontWeight: 500,
-              color: '#6b7280',
-              mt: 1,
-              textAlign: 'center'
-            }}
-          >
-            Media (Optional)
-          </Typography>
-        </Box>
-      )
-    }
-
+    // Hide media section for employment (role) form
+    if (segment === 'role') return null
+    // Only show media if evidenceLink exists
+    if (!formData?.evidenceLink) return null
     return (
       <Box>
         <Media>
