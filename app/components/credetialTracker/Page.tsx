@@ -85,6 +85,7 @@ const TextField = ({
 
 interface TrackerProps {
   formData?: Record<string, any>
+  hideHeader?: boolean
 }
 
 type F = { label: string; key: string; isHtml?: boolean; bullet?: boolean }
@@ -138,7 +139,7 @@ const cfg: Record<string, CFG> = {
   }
 }
 
-const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
+const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => {
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
   const conf = cfg[segment] || cfg.skill
   const [timeAgo, setTimeAgo] = useState('just now')
@@ -296,34 +297,36 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
       <Box
         sx={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '0 auto' }}
       >
-        <Header elevation={0}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-            <Logo />
-            <Box>
-              <Typography
-                sx={{
-                  fontFamily: 'Lato',
-                  fontSize: '32px',
-                  fontWeight: 700,
-                  color: '#202e5b'
-                }}
-              >
-                Here&apos;s what you&apos;re building
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 400,
-                  color: '#202e5b'
-                }}
-              >
-                {formData?.fullName ?? 'User'} - {timeAgo}
-              </Typography>
+        {!hideHeader && (
+          <Header elevation={0}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+              <Logo />
+              <Box>
+                <Typography
+                  sx={{
+                    fontFamily: 'Lato',
+                    fontSize: '32px',
+                    fontWeight: 700,
+                    color: '#202e5b'
+                  }}
+                >
+                  Here&apos;s what you&apos;re building
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: 'Inter',
+                    fontSize: '16px',
+                    fontWeight: 400,
+                    color: '#202e5b'
+                  }}
+                >
+                  {formData?.fullName ?? 'User'} - {timeAgo}
+                </Typography>
+              </Box>
             </Box>
-          </Box>
-        </Header>
-        <Body>
+          </Header>
+        )}
+        <Body sx={{ backgroundColor: hideHeader ? '#fff' : '#87abe4' }}>
           <PreviewCard>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>

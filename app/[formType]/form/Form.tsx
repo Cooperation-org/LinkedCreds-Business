@@ -21,6 +21,7 @@ import { Step1 } from './Steps/Step1_userName'
 import { Step2 } from './Steps/Step2_descreptionFields'
 import { storeFileTokens } from '../../firebase/storage'
 import CredentialTracker from '../../components/credetialTracker/Page'
+import { StepTrackShape } from './fromTexts & stepTrack/StepTrackShape'
 
 interface FormProps {
   onStepChange: () => void
@@ -251,7 +252,39 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
             {activeStep === 4 && (
               <Slide in direction={direction}>
                 <Box>
-                  <DataComponent formData={watch()} selectedFiles={selectedFiles} />
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 1,
+                      mb: 2
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        fontFamily: 'Lato',
+                        fontSize: '24px',
+                        fontWeight: 400,
+                        textAlign: 'center'
+                      }}
+                    >
+                      Step 4
+                    </Box>
+                    <Box
+                      sx={{
+                        fontFamily: 'Lato',
+                        fontSize: '16px',
+                        fontWeight: 400,
+                        textAlign: 'center',
+                        mb: 1
+                      }}
+                    >
+                      Please review your credential before signing.
+                    </Box>
+                    <StepTrackShape />
+                  </Box>
+                  <CredentialTracker formData={watch()} hideHeader={true} />
                 </Box>
               </Slide>
             )}
@@ -298,7 +331,9 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
         )}
         {snackMessage && <SnackMessage message={snackMessage} />}
       </form>
-      {activeStep >= 1 && <CredentialTracker formData={formValues} />}
+      {activeStep >= 1 && activeStep !== 4 && (
+        <CredentialTracker formData={formValues} hideHeader={false} />
+      )}
     </Box>
   )
 }
