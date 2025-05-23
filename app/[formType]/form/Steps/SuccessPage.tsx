@@ -138,6 +138,18 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
     }
   }
 
+  // Helper to get the credential name for all form types
+  const getCredentialName = () => {
+    if (!formData) return ''
+    const value =
+      formData.credentialName ||
+      formData.volunteerWork ||
+      formData.role ||
+      formData.documentType ||
+      ''
+    return typeof value === 'string' ? value : ''
+  }
+
   return (
     <Box
       sx={{
@@ -241,7 +253,7 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
                     color: '#003FE0'
                   }}
                 >
-                  {formData?.credentialName}
+                  {getCredentialName()}
                 </Typography>
               </Box>
               {!fileId && <CircularProgress size={24} />}
