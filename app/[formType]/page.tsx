@@ -17,8 +17,10 @@ const FormComponent = () => {
     if (formRef.current) {
       formRef.current.scrollIntoView({ behavior: 'smooth' })
       setTimeout(() => {
-        formRef.current?.scrollIntoView({ behavior: 'smooth' })
-      }, 10)
+        if (formRef.current) {
+          formRef.current.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
     }
   }, [])
 

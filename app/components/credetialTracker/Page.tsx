@@ -266,7 +266,14 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => 
   }
 
   return (
-    <Box sx={{ p: 0, width: '100%', maxWidth: '720px' }}>
+    <Box
+      sx={{
+        p: 0,
+        width: '100%',
+        maxWidth: '720px',
+        display: { xs: 'none', md: 'block' }
+      }}
+    >
       <Box
         sx={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '0 auto' }}
       >

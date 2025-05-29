@@ -1,5 +1,6 @@
 'use client'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import {
   Box,
   Typography,
@@ -11,6 +12,40 @@ import {
   CardContent,
   styled
 } from '@mui/material'
+import {
+  getUserAnalytics
+  // updateClickRates, // We might need this if we add interactive elements to update rates
+  // UserAnalyticsData, // Already defined below, but good for direct import if needed
+} from '../firebase/firestore' // Adjusted path
+
+// Define UserAnalyticsData interface locally if not importing, or ensure it matches Firestore one
+interface CredentialsIssued {
+  skill: number
+  employment: number
+  performanceReview: number
+  volunteer: number
+  idVerification: number
+}
+
+interface ClickRates {
+  requestRecommendation: number
+  shareCredential: number
+}
+
+interface EvidenceAttachmentRates {
+  skillVCs: number
+  employmentVCs: number
+  volunteerVCs: number
+  performanceReviews: number
+}
+
+interface UserAnalyticsData {
+  email: string
+  credentialsIssued: CredentialsIssued
+  clickRates: ClickRates
+  evidenceAttachmentRates: EvidenceAttachmentRates
+  lastActivity: string
+}
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -117,10 +152,49 @@ const LabeledProgress: React.FC<LabeledProgressProps> = ({ value, label }) => {
 
 // Main component
 export default function Main() {
+  const { data: session } = useSession()
+  const [analyticsData, setAnalyticsData] = useState<UserAnalyticsData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (session?.user?.email) {
+        setLoading(true)
+        // Fetch from Firestore first - this contains the correct analytics
+        const firestoreData = await getUserAnalytics(session.user.email)
+        setAnalyticsData(firestoreData)
+        setLoading(false)
+      } else if (session === null) {
+        // No active session
+        setLoading(false)
+        setAnalyticsData(null)
+      }
+    }
+
+    fetchData()
+  }, [session])
+
+  if (loading) {
+    return (
+      <Container maxWidth='lg' sx={{ py: 5, textAlign: 'center' }}>
+        <Typography>Loading analytics...</Typography>
+        <LinearProgress />
+      </Container>
+    )
+  }
+
+  if (!session || !analyticsData) {
+    return (
+      <Container maxWidth='lg' sx={{ py: 5, textAlign: 'center' }}>
+        <Typography>Please log in to view analytics.</Typography>
+      </Container>
+    )
+  }
+
   return (
     <Container maxWidth='lg' sx={{ py: 5 }}>
       <Typography sx={{ fontWeight: 600, fontSize: '32px', lineHeight: '24px', mb: 6 }}>
-        Analytics
+        Analytics for {session.user?.name || session.user?.email}
       </Typography>
       <Paper
         sx={{
@@ -133,7 +207,7 @@ export default function Main() {
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '60px' }}>
-          {/* Credentials Issued Section */}
+          {/* Credentials Issued Section - Data from Google Drive (placeholder) */}
           <Box>
             <StyledSectionTitle>Credentials Issued</StyledSectionTitle>
             <Grid container spacing={3}>
@@ -141,7 +215,9 @@ export default function Main() {
                 <StyledMetricCard>
                   <StyledCardContent>
                     <StyledMetricTitle>Skill</StyledMetricTitle>
-                    <StyledMetricValue>13</StyledMetricValue>
+                    <StyledMetricValue>
+                      {analyticsData.credentialsIssued.skill}
+                    </StyledMetricValue>
                   </StyledCardContent>
                 </StyledMetricCard>
               </Grid>
@@ -149,7 +225,9 @@ export default function Main() {
                 <StyledMetricCard>
                   <StyledCardContent>
                     <StyledMetricTitle>Employment</StyledMetricTitle>
-                    <StyledMetricValue>24</StyledMetricValue>
+                    <StyledMetricValue>
+                      {analyticsData.credentialsIssued.employment}
+                    </StyledMetricValue>
                   </StyledCardContent>
                 </StyledMetricCard>
               </Grid>
@@ -157,7 +235,9 @@ export default function Main() {
                 <StyledMetricCard>
                   <StyledCardContent>
                     <StyledMetricTitle>Performance Review</StyledMetricTitle>
-                    <StyledMetricValue>28</StyledMetricValue>
+                    <StyledMetricValue>
+                      {analyticsData.credentialsIssued.performanceReview}
+                    </StyledMetricValue>
                   </StyledCardContent>
                 </StyledMetricCard>
               </Grid>
@@ -165,7 +245,9 @@ export default function Main() {
                 <StyledMetricCard>
                   <StyledCardContent>
                     <StyledMetricTitle>Volunteer</StyledMetricTitle>
-                    <StyledMetricValue>61</StyledMetricValue>
+                    <StyledMetricValue>
+                      {analyticsData.credentialsIssued.volunteer}
+                    </StyledMetricValue>
                   </StyledCardContent>
                 </StyledMetricCard>
               </Grid>
@@ -173,14 +255,16 @@ export default function Main() {
                 <StyledMetricCard>
                   <StyledCardContent>
                     <StyledMetricTitle>ID Verification</StyledMetricTitle>
-                    <StyledMetricValue>24</StyledMetricValue>
+                    <StyledMetricValue>
+                      {analyticsData.credentialsIssued.idVerification}
+                    </StyledMetricValue>
                   </StyledCardContent>
                 </StyledMetricCard>
               </Grid>
             </Grid>
           </Box>
 
-          {/* Click Rates Section */}
+          {/* Click Rates Section - Data from Firestore */}
           <Box>
             <StyledSectionTitle>Click Rates</StyledSectionTitle>
             <Grid container spacing={3}>
@@ -192,7 +276,9 @@ export default function Main() {
                     >
                       Request Recommendation
                     </StyledMetricTitle>
-                    <StyledMetricValue>73</StyledMetricValue>
+                    <StyledMetricValue>
+                      {analyticsData.clickRates.requestRecommendation}
+                    </StyledMetricValue>
                     <StyledChartContainer
                       sx={{
                         backgroundImage:
@@ -212,7 +298,9 @@ export default function Main() {
                     >
                       Share Credential
                     </StyledMetricTitle>
-                    <StyledMetricValue>3</StyledMetricValue>
+                    <StyledMetricValue>
+                      {analyticsData.clickRates.shareCredential}
+                    </StyledMetricValue>
                     <StyledChartContainer
                       sx={{
                         backgroundImage:
@@ -227,7 +315,7 @@ export default function Main() {
             </Grid>
           </Box>
 
-          {/* Evidence Attachment Rates Section */}
+          {/* Evidence Attachment Rates Section - Data from Google Drive (placeholder) */}
           <Box>
             <StyledSectionTitle>Evidence Attachment Rates</StyledSectionTitle>
             <StyledCard sx={{ maxWidth: '396px' }}>
@@ -245,10 +333,22 @@ export default function Main() {
                 </Typography>
               </Box>
               <CardContent>
-                <LabeledProgress value={52} label='Skill VCs' />
-                <LabeledProgress value={80} label='Employment VCs' />
-                <LabeledProgress value={23} label='Volunteer VCs' />
-                <LabeledProgress value={95} label='Performance Reviews' />
+                <LabeledProgress
+                  value={analyticsData.evidenceAttachmentRates.skillVCs}
+                  label='Skill VCs'
+                />
+                <LabeledProgress
+                  value={analyticsData.evidenceAttachmentRates.employmentVCs}
+                  label='Employment VCs'
+                />
+                <LabeledProgress
+                  value={analyticsData.evidenceAttachmentRates.volunteerVCs}
+                  label='Volunteer VCs'
+                />
+                <LabeledProgress
+                  value={analyticsData.evidenceAttachmentRates.performanceReviews}
+                  label='Performance Reviews'
+                />
               </CardContent>
             </StyledCard>
           </Box>
