@@ -20,8 +20,11 @@ import FileUploadAndList from './Steps/Step3_uploadEvidence'
 import { Step1 } from './Steps/Step1_userName'
 import { Step2 } from './Steps/Step2_descreptionFields'
 import { storeFileTokens } from '../../firebase/storage'
-import { incrementCredentialTypeCount } from '../../firebase/firestore'
-import type { CredentialsIssued } from '../../firebase/firestore'
+import {
+  incrementCredentialTypeCount,
+  incrementEvidenceAttachmentRate
+} from '../../firebase/firestore'
+import type { CredentialsIssued, EvidenceAttachmentRates } from '../../firebase/firestore'
 import CredentialTracker from '../../components/credetialTracker/Page'
 
 interface FormProps {
@@ -192,7 +195,40 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
               fbCredentialType as keyof CredentialsIssued
             )
           } catch (fbError) {
-            console.error('Failed to update Firebase analytics:', fbError)
+            console.error(
+              'Failed to update Firebase analytics (credential count):',
+              fbError
+            )
+          }
+        }
+
+        // Check for evidence and increment evidence attachment rate
+        const hasPortfolioEvidence = data.portfolio && data.portfolio.length > 0
+        const hasLinkEvidence = data.evidenceLink && data.evidenceLink.trim() !== ''
+
+        if (hasPortfolioEvidence || hasLinkEvidence) {
+          const evidenceTypeMap: Record<string, keyof EvidenceAttachmentRates> = {
+            skill: 'skillVCs',
+            volunteer: 'volunteerVCs',
+            role: 'employmentVCs', // Assuming 'role' formType maps to 'employmentVCs'
+            'performance-review': 'performanceReviews'
+            // Note: idVerification typically might not have evidence in the same way,
+            // but can be added if needed.
+          }
+          const fbEvidenceType = evidenceTypeMap[formType]
+
+          if (fbEvidenceType) {
+            try {
+              await incrementEvidenceAttachmentRate(
+                userEmail,
+                fbEvidenceType as keyof EvidenceAttachmentRates
+              )
+            } catch (fbError) {
+              console.error(
+                'Failed to update Firebase analytics (evidence rate):',
+                fbError
+              )
+            }
           }
         }
       }
@@ -223,11 +259,14 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
         display: 'flex',
         gap: '90px',
         alignItems: 'flex-start',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        p: { xs: '0 20px', md: '0' }
       }}
     >
-      <form
-        style={{
+      <Box
+        component='form'
+        onSubmit={handleFormSubmit}
+        sx={{
           display: 'flex',
           flexDirection: 'column',
           gap: '30px',
@@ -236,9 +275,8 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
           overflow: 'auto',
           width: '100%',
           maxWidth: '720px',
-          backgroundColor: '#FFF'
+          backgroundColor: { xs: 'transparent', md: '#FFF' }
         }}
-        onSubmit={handleFormSubmit}
       >
         <Box sx={{ width: '100%', maxWidth: '720px' }}>
           <FormControl sx={{ width: '100%' }}>
@@ -335,7 +373,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
           </div>
         )}
         {snackMessage && <SnackMessage message={snackMessage} />}
-      </form>
+      </Box>
       {activeStep >= 1 && <CredentialTracker formData={formValues} />}
     </Box>
   )

@@ -29,7 +29,7 @@ interface ClickRates {
   shareCredential: number
 }
 
-interface EvidenceAttachmentRates {
+export interface EvidenceAttachmentRates {
   skillVCs: number
   employmentVCs: number
   volunteerVCs: number
@@ -286,6 +286,77 @@ export const incrementCredentialTypeCount = async (
         await setDoc(userDocRef, dataToSet)
         console.log(
           `Created document for ${emailPrefix} and set initial ${credentialType} count to 1.`
+        )
+      } catch (setDocError: any) {
+        console.error(
+          `Error creating document for ${emailPrefix} after increment failed:`,
+          setDocError.message || setDocError
+        )
+      }
+    }
+  }
+}
+
+// Function to increment a specific evidence attachment rate
+export const incrementEvidenceAttachmentRate = async (
+  userEmail: string,
+  evidenceType: keyof EvidenceAttachmentRates
+): Promise<void> => {
+  const emailPrefix = getUserEmailPrefix(userEmail)
+  if (!emailPrefix) {
+    console.error('User email is invalid for incrementing evidence attachment rate.')
+    return
+  }
+  const userDocRef = doc(db, 'users', emailPrefix)
+
+  try {
+    await updateDoc(userDocRef, {
+      email: userEmail,
+      [`evidenceAttachmentRates.${evidenceType}`]: increment(1),
+      lastActivity: serverTimestamp()
+    })
+    console.log(
+      `Successfully incremented evidenceAttachmentRates.${evidenceType} for ${emailPrefix}`
+    )
+  } catch (error: any) {
+    console.error(
+      `Error incrementing evidenceAttachmentRates.${evidenceType} for ${emailPrefix}:`,
+      error.message || error
+    )
+    if (
+      error.code === 'not-found' ||
+      error.message?.toLowerCase().includes('no document to update')
+    ) {
+      console.warn(
+        `Document not found for ${emailPrefix}. Creating document with initial rate for ${evidenceType}.`
+      )
+      const initialRates: EvidenceAttachmentRates = {
+        skillVCs: 0,
+        employmentVCs: 0,
+        volunteerVCs: 0,
+        performanceReviews: 0
+      }
+      initialRates[evidenceType] = 1
+
+      const dataToSet: Omit<UserAnalyticsData, 'lastActivity'> & {
+        lastActivity: FieldValue
+      } = {
+        email: userEmail,
+        credentialsIssued: {
+          skill: 0,
+          employment: 0,
+          performanceReview: 0,
+          volunteer: 0,
+          idVerification: 0
+        },
+        clickRates: { requestRecommendation: 0, shareCredential: 0 },
+        evidenceAttachmentRates: initialRates,
+        lastActivity: serverTimestamp()
+      }
+      try {
+        await setDoc(userDocRef, dataToSet)
+        console.log(
+          `Created document for ${emailPrefix} and set initial ${evidenceType} rate to 1.`
         )
       } catch (setDocError: any) {
         console.error(
