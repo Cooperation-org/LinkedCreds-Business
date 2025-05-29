@@ -16,7 +16,7 @@ const getUserEmailPrefix = (email: string | null | undefined): string | null => 
 }
 
 // Firestore data structures (matching your schema)
-interface CredentialsIssued {
+export interface CredentialsIssued {
   skill: number
   employment: number
   performanceReview: number
@@ -221,6 +221,78 @@ export const updateCredentialsIssued = async (
       }
     } else {
       console.error('Error updating credentials issued:', error.message || error)
+    }
+  }
+}
+
+// Function to increment a specific credential type count
+export const incrementCredentialTypeCount = async (
+  userEmail: string,
+  credentialType: keyof CredentialsIssued
+): Promise<void> => {
+  const emailPrefix = getUserEmailPrefix(userEmail)
+  if (!emailPrefix) {
+    console.error('User email is invalid for incrementing credential type count.')
+    return
+  }
+  const userDocRef = doc(db, 'users', emailPrefix)
+
+  try {
+    await updateDoc(userDocRef, {
+      email: userEmail,
+      [`credentialsIssued.${credentialType}`]: increment(1),
+      lastActivity: serverTimestamp()
+    })
+    console.log(
+      `Successfully incremented credentialsIssued.${credentialType} for ${emailPrefix}`
+    )
+  } catch (error: any) {
+    console.error(
+      `Error incrementing credentialsIssued.${credentialType} for ${emailPrefix}:`,
+      error.message || error
+    )
+    // Attempt to create the document if it doesn't exist, mirroring other update functions
+    if (
+      error.code === 'not-found' ||
+      error.message?.toLowerCase().includes('no document to update')
+    ) {
+      console.warn(
+        `Document not found for ${emailPrefix}. Creating document with initial count for ${credentialType}.`
+      )
+      const initialCredentials: CredentialsIssued = {
+        skill: 0,
+        employment: 0,
+        performanceReview: 0,
+        volunteer: 0,
+        idVerification: 0
+      }
+      initialCredentials[credentialType] = 1 // Set initial count to 1
+
+      const dataToSet: Omit<UserAnalyticsData, 'lastActivity'> & {
+        lastActivity: FieldValue
+      } = {
+        email: userEmail,
+        credentialsIssued: initialCredentials,
+        clickRates: { requestRecommendation: 0, shareCredential: 0 },
+        evidenceAttachmentRates: {
+          skillVCs: 0,
+          employmentVCs: 0,
+          volunteerVCs: 0,
+          performanceReviews: 0
+        },
+        lastActivity: serverTimestamp()
+      }
+      try {
+        await setDoc(userDocRef, dataToSet)
+        console.log(
+          `Created document for ${emailPrefix} and set initial ${credentialType} count to 1.`
+        )
+      } catch (setDocError: any) {
+        console.error(
+          `Error creating document for ${emailPrefix} after increment failed:`,
+          setDocError.message || setDocError
+        )
+      }
     }
   }
 }

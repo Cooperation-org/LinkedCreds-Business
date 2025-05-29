@@ -192,6 +192,7 @@ const withResolversPolyfill = <T,>() => {
 
 const ClaimsPageClient: React.FC = () => {
   const [claims, setClaims] = useState<any[]>([])
+  console.log(': claims', claims)
   const [loading, setLoading] = useState(true)
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)

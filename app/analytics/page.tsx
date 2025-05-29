@@ -156,80 +156,19 @@ export default function Main() {
   const [analyticsData, setAnalyticsData] = useState<UserAnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // TODO: Implement Google Drive data fetching logic
-  const fetchCredentialsIssuedFromDrive = async (accessToken: string) => {
-    // Placeholder: Replace with actual Google Drive API calls
-    console.log('Fetching credentials issued from Google Drive...', accessToken)
-    // This function would interact with GDrive, count files/folders based on your logic
-    // and then call updateCredentialsIssued from firestore.ts
-    return {
-      skill: 13, // example data
-      employment: 24,
-      performanceReview: 28,
-      volunteer: 61,
-      idVerification: 24
-    }
-  }
-
-  const fetchEvidenceAttachmentRatesFromDrive = async (accessToken: string) => {
-    // Placeholder: Replace with actual Google Drive API calls
-    console.log('Fetching evidence attachment rates from Google Drive...', accessToken)
-    // This function would also interact with GDrive
-    // and then call updateEvidenceAttachmentRates from firestore.ts
-    return {
-      skillVCs: 52, // example data
-      employmentVCs: 80,
-      volunteerVCs: 23,
-      performanceReviews: 95
-    }
-  }
-
   useEffect(() => {
     const fetchData = async () => {
       if (session?.user?.email) {
         setLoading(true)
-        // Fetch from Firestore first
-        let data = await getUserAnalytics(session.user.email)
-
-        // If you want to always refresh Drive data and update Firestore:
-        if (session.accessToken) {
-          const driveCredentialsIssued = await fetchCredentialsIssuedFromDrive(
-            session.accessToken
-          )
-          const driveEvidenceRates = await fetchEvidenceAttachmentRatesFromDrive(
-            session.accessToken
-          )
-
-          // Update Firestore with fresh Drive data (optional, depending on your flow)
-          // This assumes you have update functions in firestore.ts that can take the whole object
-          // or you call individual update functions for each metric.
-          // For now, we'll just merge it into the data to be displayed.
-          if (data) {
-            data = {
-              ...data,
-              credentialsIssued: driveCredentialsIssued,
-              evidenceAttachmentRates: driveEvidenceRates
-            }
-          } else {
-            // If no data from firestore, use Drive data as a base
-            data = {
-              email: session.user.email,
-              credentialsIssued: driveCredentialsIssued,
-              clickRates: { requestRecommendation: 0, shareCredential: 0 }, // Default click rates
-              evidenceAttachmentRates: driveEvidenceRates,
-              lastActivity: new Date().toISOString()
-            }
-          }
-        }
-
-        setAnalyticsData(data)
+        // Fetch from Firestore first - this contains the correct analytics
+        const firestoreData = await getUserAnalytics(session.user.email)
+        setAnalyticsData(firestoreData)
         setLoading(false)
       } else if (session === null) {
         // No active session
         setLoading(false)
         setAnalyticsData(null)
       }
-      // If session is undefined, it means it's still loading, so we don't do anything until it resolves.
     }
 
     fetchData()

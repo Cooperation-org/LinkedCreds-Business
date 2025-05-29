@@ -190,6 +190,16 @@ export function Step2({
                 <TextField
                   {...params}
                   {...commonProps}
+                  placeholder={commonProps.placeholder}
+                  variant={commonProps.variant}
+                  sx={commonProps.sx}
+                  inputProps={{
+                    ...params.inputProps,
+                    style: {
+                      ...params.inputProps?.style,
+                      ...commonProps.inputProps.style
+                    }
+                  }}
                   error={!!error}
                   helperText={error?.message}
                 />

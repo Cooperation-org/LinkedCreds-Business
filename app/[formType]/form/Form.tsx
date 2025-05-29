@@ -20,6 +20,8 @@ import FileUploadAndList from './Steps/Step3_uploadEvidence'
 import { Step1 } from './Steps/Step1_userName'
 import { Step2 } from './Steps/Step2_descreptionFields'
 import { storeFileTokens } from '../../firebase/storage'
+import { incrementCredentialTypeCount } from '../../firebase/firestore'
+import type { CredentialsIssued } from '../../firebase/firestore'
 import CredentialTracker from '../../components/credetialTracker/Page'
 
 interface FormProps {
@@ -41,6 +43,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
   const { data: session } = useSession()
   const accessToken = session?.accessToken as string | undefined
   const refreshToken = session?.refreshToken as string | undefined
+  const userEmail = session?.user?.email
   const storage = new GoogleDriveStorage(accessToken ?? '')
 
   const {
@@ -88,6 +91,13 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
   })
 
   const formValues = watch()
+
+  useEffect(() => {
+    if (formType) {
+      setActiveStep(0)
+      reset()
+    }
+  }, [formType, setActiveStep, reset])
 
   useEffect(() => {
     setPrevStep(activeStep + 1)
@@ -141,6 +151,11 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
       delete data.showDuration
       delete data.currentVolunteer
     }
+
+    if (formType === 'volunteer' && data.volunteerWork) {
+      ;(data as any).credentialName = data.volunteerWork
+    }
+
     if (!accessToken) {
       setErrorMessage('Access token is missing')
       return
@@ -159,6 +174,28 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
       setLink(`https://drive.google.com/file/d/${file.id}/view`)
       setFileId(file.id)
       setRes(credRes)
+      localStorage.removeItem('vcs')
+
+      if (userEmail) {
+        const credentialTypeMap: Record<string, keyof CredentialsIssued> = {
+          skill: 'skill',
+          volunteer: 'volunteer',
+          role: 'employment',
+          'performance-review': 'performanceReview',
+          'identity-verification': 'idVerification'
+        }
+        const fbCredentialType = credentialTypeMap[formType]
+        if (fbCredentialType) {
+          try {
+            await incrementCredentialTypeCount(
+              userEmail,
+              fbCredentialType as keyof CredentialsIssued
+            )
+          } catch (fbError) {
+            console.error('Failed to update Firebase analytics:', fbError)
+          }
+        }
+      }
     } catch (e) {
       console.error(e)
       throw e
