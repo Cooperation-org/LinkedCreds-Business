@@ -130,7 +130,7 @@ const CredentialCard = ({
 }
 
 export default function NewCredentialPage() {
-  const [disabledCredentials] = useState<CredentialType[]>([])
+  const [disabledCredentials] = useState<CredentialType[]>(['identityVerification'])
   const [selectedCredential, setSelectedCredential] = useState<CredentialType>(null)
   const router = useRouter()
 
@@ -178,7 +178,7 @@ export default function NewCredentialPage() {
     },
     {
       type: 'identityVerification',
-      title: 'Identity Verification',
+      title: 'Notarized Identity Verification',
       icon: (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Box

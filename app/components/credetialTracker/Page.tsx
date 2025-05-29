@@ -85,6 +85,7 @@ const TextField = ({
 
 interface TrackerProps {
   formData?: Record<string, any>
+  hideHeader?: boolean
 }
 
 type F = { label: string; key: string; isHtml?: boolean; bullet?: boolean }
@@ -97,8 +98,7 @@ const cfg: Record<string, CFG> = {
       { label: 'Skill Name', key: 'credentialName' },
       { label: 'Skill Description', key: 'credentialDescription', isHtml: true },
       { label: 'Earning Criteria', key: 'description', isHtml: true },
-      { label: 'Duration', key: 'credentialDuration' },
-      { label: 'Supporting Documentation', key: 'supportingDocs' }
+      { label: 'Duration', key: 'credentialDuration' }
     ]
   },
   'performance-review': {
@@ -116,8 +116,7 @@ const cfg: Record<string, CFG> = {
   role: {
     fields: [
       { label: 'Your Role', key: 'role' },
-      { label: 'Company you work for', key: 'company' },
-      { label: 'Supporting Documentation', key: 'supportingDocs' }
+      { label: 'Company you work for', key: 'company' }
     ]
   },
   volunteer: {
@@ -135,13 +134,12 @@ const cfg: Record<string, CFG> = {
       { label: 'Document Type', key: 'documentType' },
       { label: 'Document Number', key: 'documentNumber' },
       { label: 'Issuing Country', key: 'issuingCountry' },
-      { label: 'Expiration Date', key: 'expirationDate' },
-      { label: 'Supporting Documentation', key: 'supportingDocs' }
+      { label: 'Expiration Date', key: 'expirationDate' }
     ]
   }
 }
 
-const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
+const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => {
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
   const conf = cfg[segment] || cfg.skill
   const [timeAgo, setTimeAgo] = useState('just now')
@@ -189,11 +187,14 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
     const shouldDisplayUrl = (url: string): boolean => {
       return !url.includes('drive.google.com/uc?export=view')
     }
+    const linkText =
+      (formData.supportingDocs && formData.supportingDocs.trim()) || evidence // ← shows URL until a title is provided
+    const name = portfolio.length > 0 ? portfolio[0].name : ''
 
     return (
       <Box sx={{ mb: 2.5 }}>
         <Label>Supporting Documentation</Label>
-        <ul style={{ margin: 0, paddingLeft: '18px' }}>
+        <ul style={{ margin: 0, paddingLeft: 18 }}>
           {evidence && shouldDisplayUrl(evidence) && (
             <li style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}>
               <a
@@ -202,29 +203,27 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
                 rel='noopener noreferrer'
                 style={{ color: '#6b7280' }}
               >
-                {formData.supportingDocs || evidence}
+                {(formData.supportingDocs && formData.supportingDocs.trim()) || evidence}
               </a>
             </li>
           )}
-          {portfolio.map(
-            (file: any, index: number) =>
-              file.name &&
-              file.url &&
-              shouldDisplayUrl(file.url) && (
-                <li
-                  key={index}
-                  style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}
+
+          {portfolio.map((file: any, i: number) =>
+            file.url && shouldDisplayUrl(file.url) ? (
+              <li
+                key={i}
+                style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}
+              >
+                <a
+                  href={file.url}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  style={{ color: '#6b7280' }}
                 >
-                  <a
-                    href={file.url}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    style={{ color: '#6b7280' }}
-                  >
-                    {file.name || file.url}
-                  </a>
-                </li>
-              )
+                  {(file.name && file.name.trim()) || file.url}
+                </a>
+              </li>
+            ) : null
           )}
         </ul>
       </Box>
@@ -232,37 +231,10 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
   }
 
   const renderMedia = () => {
-    if (!formData?.evidenceLink) {
-      return (
-        <Box>
-          <Media>
-            <Image
-              src='/images/SkillMedia.svg'
-              alt='Featured Media'
-              width={160}
-              height={153}
-              style={{
-                borderRadius: '10px',
-                objectFit: 'cover'
-              }}
-            />
-          </Media>
-          <Typography
-            sx={{
-              fontFamily: 'Inter',
-              fontSize: '16px',
-              fontWeight: 500,
-              color: '#6b7280',
-              mt: 1,
-              textAlign: 'center'
-            }}
-          >
-            Featured Media
-          </Typography>
-        </Box>
-      )
-    }
-
+    // Hide media section for employment (role) form
+    if (segment === 'role') return null
+    // Only show media if evidenceLink exists
+    if (!formData?.evidenceLink) return null
     return (
       <Box>
         <Media>
@@ -287,7 +259,7 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
             textAlign: 'center'
           }}
         >
-          Featured Media
+          Media (Optional)
         </Typography>
       </Box>
     )
@@ -305,34 +277,36 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData }) => {
       <Box
         sx={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '0 auto' }}
       >
-        <Header elevation={0}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-            <Logo />
-            <Box>
-              <Typography
-                sx={{
-                  fontFamily: 'Lato',
-                  fontSize: '32px',
-                  fontWeight: 700,
-                  color: '#202e5b'
-                }}
-              >
-                Here&apos;s what you&apos;re building
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 400,
-                  color: '#202e5b'
-                }}
-              >
-                {formData?.fullName ?? 'User'} - {timeAgo}
-              </Typography>
+        {!hideHeader && (
+          <Header elevation={0}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+              <Logo />
+              <Box>
+                <Typography
+                  sx={{
+                    fontFamily: 'Lato',
+                    fontSize: '32px',
+                    fontWeight: 700,
+                    color: '#202e5b'
+                  }}
+                >
+                  Here&apos;s what you&apos;re building
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: 'Inter',
+                    fontSize: '16px',
+                    fontWeight: 400,
+                    color: '#202e5b'
+                  }}
+                >
+                  {formData?.fullName ?? 'User'} - {timeAgo}
+                </Typography>
+              </Box>
             </Box>
-          </Box>
-        </Header>
-        <Body>
+          </Header>
+        )}
+        <Body sx={{ backgroundColor: hideHeader ? '#fff' : '#87abe4' }}>
           <PreviewCard>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>

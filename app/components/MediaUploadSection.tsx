@@ -43,6 +43,7 @@ type Props = {
   onNameChange: (id: string, name: string) => void
   onSetAsFeatured: (id: string) => void
   onReorder: (files: FileItem[]) => void
+  hideUpload?: boolean
 }
 
 const MediaUploadSection: React.FC<Props> = ({
@@ -53,7 +54,8 @@ const MediaUploadSection: React.FC<Props> = ({
   onDelete,
   onNameChange,
   onSetAsFeatured,
-  onReorder
+  onReorder,
+  hideUpload = false
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -128,24 +130,27 @@ const MediaUploadSection: React.FC<Props> = ({
           onReorder={onReorder}
         />
 
-        {/* Click-to-upload is ONLY this area now */}
-        <Box onClick={openPicker} sx={{ textAlign: 'center', cursor: 'pointer' }}>
-          <SVGUploadMedia />
-          <Typography variant='body1' color='primary'>
-            + Add media
-            <br />
-            (images, documents, video)
-          </Typography>
-        </Box>
-
-        <input
-          type='file'
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept={ALLOWED_TYPES.join(',')}
-          multiple
-          hidden
-        />
+        {/* Only show upload area if not hidden */}
+        {!hideUpload && (
+          <>
+            <Box onClick={openPicker} sx={{ textAlign: 'center', cursor: 'pointer' }}>
+              <SVGUploadMedia />
+              <Typography variant='body1' color='primary'>
+                + Add media
+                <br />
+                (images, documents, video)
+              </Typography>
+            </Box>
+            <input
+              type='file'
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept={ALLOWED_TYPES.join(',')}
+              multiple
+              hidden
+            />
+          </>
+        )}
       </CardStyle>
 
       <Snackbar open={!!error} onClose={handleCloseError} autoHideDuration={6000}>
