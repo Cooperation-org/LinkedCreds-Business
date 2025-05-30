@@ -13,12 +13,7 @@ export function StepTrackShape() {
   const accessToken = session?.accessToken
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
-  let TOTAL_STEPS = 4
-  if (pathname.includes('/recommendations')) {
-    TOTAL_STEPS = 7
-  } else if (pathname.includes('/performance-review')) {
-    TOTAL_STEPS = 5
-  }
+  const TOTAL_STEPS = pathname.includes('/recommendations') ? 7 : 4
 
   const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -100,7 +95,7 @@ export function StepTrackShape() {
         justifyContent: 'center'
       }}
     >
-      {activeStep > 0 && activeStep <= TOTAL_STEPS && (
+      {activeStep >= 2 && activeStep <= 4 && (
         <Button
           onClick={handleBack}
           sx={{ textTransform: 'capitalize', p: '0', mr: '5px' }}
@@ -119,10 +114,7 @@ export function StepTrackShape() {
         {Array.from({ length: TOTAL_STEPS }, (_, index) => renderStepBox(index))}
       </Box>
 
-      {((pathname.includes('/performance-review') && activeStep === 4) ||
-        (!pathname.includes('/performance-review') &&
-          !pathname.includes('/recommendations') &&
-          activeStep === 3)) && (
+      {activeStep === 3 && (
         <Button
           onClick={handleNext}
           sx={{ textTransform: 'capitalize', p: '0', mr: '5px' }}

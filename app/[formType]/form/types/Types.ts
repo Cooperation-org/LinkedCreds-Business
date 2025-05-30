@@ -59,16 +59,6 @@ export interface FormData {
   explainAnswer: string
   howKnow: string
   qualification: string
-  reviewComments?: string
-  overallRating?: string
-  goalsNext?: string
-  reviewStartDate?: string
-  reviewEndDate?: string
-  reviewDuration?: string
-  jobKnowledgeRating?: string
-  teamworkRating?: string
-  initiativeRating?: string
-  communicationRating?: string
   [key: string]: string | number | Portfolio[] | undefined
 }
 

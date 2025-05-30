@@ -11,8 +11,6 @@ interface ButtonsProps {
   isValid: boolean
   handleSaveSession: () => void
   loading: boolean
-  isPerformanceReview?: boolean
-  maxStepsBeforeSign?: number
 }
 
 export function Buttons({
@@ -21,13 +19,8 @@ export function Buttons({
   handleSign,
   isValid,
   handleSaveSession,
-  loading,
-  isPerformanceReview,
-  maxStepsBeforeSign
+  loading
 }: Readonly<ButtonsProps>) {
-  const actualMaxStepsBeforeSign = (maxStepsBeforeSign ?? isPerformanceReview) ? 5 : 4
-  const evidenceUploadStep = isPerformanceReview ? 4 : 3
-
   return (
     <Box
       sx={{
@@ -48,30 +41,30 @@ export function Buttons({
           Save & Exit
         </Button>
       )}
-      {activeStep === evidenceUploadStep && (
+      {activeStep === 3 && (
         <Button variant='finishButton' onClick={handleNext} color='secondary'>
           Skip
         </Button>
       )}
-      {activeStep !== actualMaxStepsBeforeSign && activeStep !== 0 && (
+      {(activeStep === 1 || (activeStep !== 4 && activeStep !== 0)) && (
         <Button
           onClick={handleNext}
           color='primary'
-          disabled={activeStep !== 0 && activeStep !== evidenceUploadStep && !isValid}
+          disabled={activeStep !== 0 && activeStep !== 3 && !isValid}
           variant='nextButton'
         >
           Next
         </Button>
       )}
-      {activeStep === actualMaxStepsBeforeSign && (
+      {activeStep === 4 && (
         <Button variant='nextButton' onClick={handleSign} color='primary'>
           Finish & Sign
         </Button>
       )}
-      {activeStep === actualMaxStepsBeforeSign + 1 && (
+      {activeStep === 5 && (
         <Button
           onClick={handleNext}
-          disabled={loading}
+          disabled={loading} // Disable button during loading
           color='primary'
           variant='nextButton'
         >

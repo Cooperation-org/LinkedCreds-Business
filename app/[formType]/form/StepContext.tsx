@@ -11,34 +11,27 @@ import React, {
 interface StepContextType {
   activeStep: number
   loading: boolean
-  setLoading: (isLoading: boolean) => void
   setActiveStep: (step: number) => void
   handleNext: () => Promise<void>
   handleBack: () => void
-  setUploadImageFn: (
-    fn: ((loader: (l: boolean) => void) => () => Promise<void>) | null
-  ) => void
-  uploadImageFnRef: React.MutableRefObject<
-    ((loader: (l: boolean) => void) => () => Promise<void>) | null
-  >
+  setUploadImageFn: (fn: () => Promise<void>) => void
 }
 
-const StepContext = createContext<StepContextType>(undefined!)
+const StepContext = createContext<StepContextType>({
+  activeStep: 0,
+  loading: false,
+  setActiveStep: () => {},
+  handleNext: async () => {},
+  handleBack: () => {},
+  setUploadImageFn: () => () => {}
+})
 
 export const StepProvider = ({ children }: { children: React.ReactNode }) => {
   const [activeStep, setActiveStep] = useState(0)
-  const [loading, setLoading] = useState(false)
-
-  const uploadImageFnRef = React.useRef<
-    ((loader: (l: boolean) => void) => () => Promise<void>) | null
-  >(null)
-
-  const setUploadImageFn = useCallback(
-    (fn: ((loader: (l: boolean) => void) => () => Promise<void>) | null) => {
-      uploadImageFnRef.current = fn
-    },
-    []
+  const [uploadImageFn, setUploadImageFn] = useState<() => Promise<void>>(
+    () => async () => {}
   )
+  const [loading, setLoading] = useState(false)
 
   const excludedPaths = useMemo(
     () => ['/', '/privacy', '/accessibility', '/terms', '/claims'],
@@ -88,12 +81,18 @@ export const StepProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeStep, excludedPaths])
 
   const handleNext = useCallback(async () => {
-    if (uploadImageFnRef.current) {
-      const uploadFnExecutor = uploadImageFnRef.current(setLoading)
-      await uploadFnExecutor()
+    if (activeStep === 3 && typeof uploadImageFn === 'function') {
+      setLoading(true)
+      try {
+        await uploadImageFn()
+      } catch (error) {
+        console.error('Error during image upload:', error)
+      } finally {
+        setLoading(false)
+      }
     }
     setActiveStep(prev => prev + 1)
-  }, [])
+  }, [activeStep, uploadImageFn])
 
   const handleBack = useCallback(() => {
     setActiveStep(prev => (prev > 0 ? prev - 1 : 0))
@@ -103,14 +102,12 @@ export const StepProvider = ({ children }: { children: React.ReactNode }) => {
     () => ({
       activeStep,
       loading,
-      setLoading,
       setActiveStep,
       handleNext,
       handleBack,
-      setUploadImageFn,
-      uploadImageFnRef
+      setUploadImageFn
     }),
-    [activeStep, loading, setLoading, handleNext, handleBack, setUploadImageFn]
+    [activeStep, loading, handleNext, handleBack]
   )
 
   return <StepContext.Provider value={contextValue}>{children}</StepContext.Provider>
