@@ -55,7 +55,7 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
   formType,
   ...props
 }) => {
-  const { loading, setUploadImageFn } = useStepContext()
+  const { loading, setUploadImageFn, setLoading } = useStepContext()
   const [showLinkAdder, setShowLinkAdder] = useState(false)
   const { storage } = useGoogleDrive()
   const [files, setFiles] = useState<FileItem[]>([...props.selectedFiles])
@@ -153,6 +153,7 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
       )
     } catch (error) {
       console.error('Error uploading files:', error)
+      throw error
     }
   }, [props.selectedFiles, props.setValue, props.setSelectedFiles, storage, props.watch])
 
@@ -242,9 +243,23 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
   )
 
   useEffect(() => {
-    // @ts-ignore-next-line
-    setUploadImageFn(() => handleUpload)
-  }, [handleUpload, setUploadImageFn])
+    setUploadImageFn(contextualSetLoading => async () => {
+      if (files.filter(f => !f.uploaded && f.file).length === 0) {
+        return
+      }
+      contextualSetLoading(true)
+      try {
+        await handleUpload()
+      } catch (error) {
+      } finally {
+        contextualSetLoading(false)
+      }
+    })
+
+    return () => {
+      setUploadImageFn(null)
+    }
+  }, [handleUpload, setUploadImageFn, files])
 
   return (
     <Box
