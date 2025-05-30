@@ -143,7 +143,7 @@ const LabeledProgress: React.FC<LabeledProgressProps> = ({ value, label }) => {
         {label}
       </Typography>
       <StyledProgressBarContainer>
-        <StyledProgressLabel>{`${value}%`}</StyledProgressLabel>
+        <StyledProgressLabel>{value}</StyledProgressLabel>
         <StyledProgressBar variant='determinate' value={value} />
       </StyledProgressBarContainer>
     </Box>
