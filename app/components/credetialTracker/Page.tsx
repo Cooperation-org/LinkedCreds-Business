@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { Box, Typography, Paper, styled, Card, CardContent } from '@mui/material'
+import { Box, Typography, Paper, styled, Card, CardContent, Divider } from '@mui/material'
 import { usePathname } from 'next/navigation'
-import { Logo } from '../../Assets/SVGs'
+import { Logo, SVGBadgeCheck } from '../../Assets/SVGs'
 import Image from 'next/image'
 
 const Header = styled(Paper)({
@@ -52,6 +52,11 @@ const Media = styled(Box)({
   margin: '0 auto'
 })
 
+const BulletList = styled('ul')({
+  margin: 0,
+  paddingLeft: 18
+})
+
 const BulletField = ({ label, value }: { label: string; value?: string }) => {
   const items = value?.split(/\n|,|•/).filter(Boolean) || []
   return (
@@ -71,24 +76,53 @@ const BulletField = ({ label, value }: { label: string; value?: string }) => {
 const TextField = ({
   label,
   value,
-  isHtml
+  isHtml,
+  isRating
 }: {
   label: string
   value?: string
   isHtml?: boolean
-}) => (
-  <Box sx={{ mb: 2.5 }}>
-    <Label>{label}</Label>
-    <Value>{value || 'To be completed...'}</Value>
-  </Box>
-)
+  isRating?: boolean
+}) => {
+  let displayValue = value || 'To be completed...'
+  if (isRating && value && value !== 'To be completed...') {
+    displayValue = `${value}/5`
+  }
+  return (
+    <Box sx={{ mb: 2.5 }}>
+      <Label>{label}</Label>
+      {isHtml && value ? (
+        <Value dangerouslySetInnerHTML={{ __html: value }} />
+      ) : (
+        <Value>{displayValue}</Value>
+      )}
+    </Box>
+  )
+}
 
 interface TrackerProps {
   formData?: Record<string, any>
   hideHeader?: boolean
 }
 
-type F = { label: string; key: string; isHtml?: boolean; bullet?: boolean }
+type F = {
+  label: string
+  key: string
+  isHtml?: boolean
+  bullet?: boolean
+  isRating?: boolean
+  conditionKey?: string
+  conditionValue?: any
+  displayType?:
+    | 'mainTitle'
+    | 'subtitle'
+    | 'media'
+    | 'ratingCollection'
+    | 'keyValuePairs'
+    | 'default'
+  relatedKeys?: string[]
+  valueLabel?: string
+}
 
 type CFG = { fields: F[] }
 
@@ -103,14 +137,20 @@ const cfg: Record<string, CFG> = {
   },
   'performance-review': {
     fields: [
-      { label: 'Company you work for', key: 'company' },
-      { label: 'Your Role', key: 'role' },
-      { label: 'Name of Employee', key: 'employeeName' },
-      { label: 'Employee job title', key: 'employeeJobTitle' },
+      { label: 'Employee Name', key: 'employeeName' },
+      { label: 'Employee Job Title', key: 'employeeJobTitle' },
+      { label: 'Company You Work For', key: 'company' },
+      { label: 'Your Role (Reviewer)', key: 'role' },
+      { label: 'Review Start Date', key: 'reviewStartDate' },
+      { label: 'Review End Date', key: 'reviewEndDate' },
+      { label: 'Review Duration', key: 'reviewDuration' },
+      { label: 'Job Knowledge rating', key: 'jobKnowledgeRating', isRating: true },
+      { label: 'Teamwork rating', key: 'teamworkRating', isRating: true },
+      { label: 'Initiative rating', key: 'initiativeRating', isRating: true },
+      { label: 'Communication rating', key: 'communicationRating', isRating: true },
+      { label: 'Overall Rating', key: 'overallRating', isRating: true },
       { label: 'Review Comments', key: 'reviewComments', isHtml: true },
-      { label: 'Overall Rating', key: 'overallRating' },
-      { label: 'Goals for Next Period', key: 'goalsNext', isHtml: true },
-      { label: 'Review Dates', key: 'reviewDates' }
+      { label: 'Goals for Next Period', key: 'goalsNext', bullet: true }
     ]
   },
   role: {
@@ -144,6 +184,10 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => 
   const conf = cfg[segment] || cfg.skill
   const [timeAgo, setTimeAgo] = useState('just now')
   const [lastChange, setLastChange] = useState(Date.now())
+  const mainTitle =
+    formData?.credentialName ||
+    (segment === 'performance-review' ? 'Performance Review' : 'Credential Preview')
+  const employeeName = formData?.employeeName
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -174,6 +218,35 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => 
     setLastChange(Date.now())
     setTimeAgo('just now')
   }, [formData])
+
+  const renderReviewDates = () => {
+    if (segment !== 'performance-review') return null
+
+    let dateDisplay = 'To be completed...'
+    if (formData?.reviewDuration) dateDisplay = formData.reviewDuration
+    else if (formData?.reviewStartDate && formData?.reviewEndDate)
+      dateDisplay = `${formData.reviewStartDate} – ${formData.reviewEndDate}`
+    else if (formData?.reviewStartDate) dateDisplay = formData.reviewStartDate
+    else if (formData?.reviewEndDate) dateDisplay = formData.reviewEndDate
+
+    return (
+      <Box mb={3}>
+        <Label>Review Dates</Label>
+        <BulletList sx={{ mt: 0.5 }}>
+          <li
+            style={{
+              color: '#6b7280',
+              fontFamily: 'Inter',
+              fontSize: 16,
+              lineHeight: '24px'
+            }}
+          >
+            {dateDisplay}
+          </li>
+        </BulletList>
+      </Box>
+    )
+  }
 
   const renderSupportingDocs = () => {
     if (!formData?.evidenceLink && !formData?.portfolio?.length) return null
@@ -231,36 +304,213 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => 
   }
 
   const renderMedia = () => {
-    // Hide media section for employment (role) form
     if (segment === 'role') return null
-    // Only show media if evidenceLink exists
-    if (!formData?.evidenceLink) return null
-    return (
-      <Box>
-        <Media>
-          <Image
-            src={formData.evidenceLink}
-            alt='Featured Media'
-            width={160}
-            height={153}
-            style={{
-              borderRadius: '10px',
-              objectFit: 'cover'
+
+    if (formData?.evidenceLink) {
+      return (
+        <Box sx={{ textAlign: 'center', mb: 2.5 }}>
+          <Media sx={{ display: 'inline-block' }}>
+            <Image
+              src={formData.evidenceLink}
+              alt='Featured Media'
+              width={160}
+              height={153}
+              style={{
+                borderRadius: '10px',
+                objectFit: 'cover'
+              }}
+            />
+          </Media>
+        </Box>
+      )
+    } else {
+      return (
+        <Box sx={{ textAlign: 'center', mb: 2.5 }}>
+          <Media sx={{ display: 'inline-block' }}>
+            <Image
+              src='/images/SkillMedia.svg'
+              alt='Media placeholder'
+              width={160}
+              height={153}
+              style={{
+                borderRadius: '10px',
+                objectFit: 'contain'
+              }}
+            />
+          </Media>
+          <Typography
+            sx={{
+              fontFamily: 'Inter',
+              fontSize: '16px',
+              fontWeight: 400,
+              color: '#6b7280',
+              mt: 1,
+              textAlign: 'center'
             }}
-          />
-        </Media>
+          >
+            Media (optional)
+          </Typography>
+        </Box>
+      )
+    }
+  }
+
+  const renderPerformanceReview = () => {
+    if (segment !== 'performance-review') return null
+
+    const year =
+      formData?.reviewYear ||
+      formData?.credentialName?.match(/\d{4}/)?.[0] ||
+      new Date().getFullYear()
+    const reviewTitle = formData?.credentialName || `${year} Performance Review`
+
+    const overallRatingValue = formData?.overallRating
+    const overallRatingDisplay = overallRatingValue ? `${overallRatingValue}/5` : null // Null if no value
+
+    return (
+      <>
+        <Box display='flex' alignItems='center' gap={0.75} mb={1.5}>
+          <Box
+            sx={{
+              width: 22,
+              height: 22,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <SVGBadgeCheck />
+          </Box>
+          <Typography
+            component='h2'
+            sx={{ fontFamily: 'Inter', fontSize: 20, fontWeight: 700, color: '#000e40' }}
+          >
+            {reviewTitle}
+          </Typography>
+        </Box>
         <Typography
           sx={{
             fontFamily: 'Inter',
-            fontSize: '16px',
-            fontWeight: 500,
-            color: '#6b7280',
-            mt: 1,
-            textAlign: 'center'
+            fontSize: 16,
+            fontWeight: 400,
+            color: '#000e40',
+            mb: 2.5,
+            lineHeight: '24px'
           }}
         >
-          Media (Optional)
+          {formData?.employeeName || 'Employee Name'}
         </Typography>
+
+        <TextField label='Review Comments' value={formData?.reviewComments} isHtml />
+
+        {/* Overall Rating - Render only if value exists */}
+        {overallRatingDisplay && (
+          <Box mb={0.5}>
+            <Typography
+              component='span'
+              sx={{
+                fontFamily: 'Inter',
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#000e40'
+              }}
+            >
+              Overall Rating:
+            </Typography>
+            <Typography
+              component='span'
+              sx={{
+                fontFamily: 'Inter',
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#000e40',
+                ml: 0.5
+              }}
+            >
+              {overallRatingDisplay}
+            </Typography>
+          </Box>
+        )}
+
+        <Box
+          mb={2.5}
+          component='ul'
+          sx={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0,
+            display: 'grid',
+            rowGap: '2px',
+            mt: overallRatingDisplay ? 0.5 : 0
+          }}
+        >
+          {[
+            { label: 'Job Knowledge rating', key: 'jobKnowledgeRating' },
+            { label: 'Teamwork rating', key: 'teamworkRating' },
+            { label: 'Initiative rating', key: 'initiativeRating' },
+            { label: 'Communication rating', key: 'communicationRating' }
+          ].map(({ label, key }) => {
+            const val = formData?.[key]
+            if (!val) return null
+            const displayVal = `${val}/5`
+            return (
+              <li key={key}>
+                <Typography
+                  component='span'
+                  sx={{
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: 400,
+                    color: '#6b7280'
+                  }}
+                >
+                  {label}:
+                </Typography>
+                <Typography
+                  component='span'
+                  sx={{
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: 400,
+                    color: '#6b7280',
+                    ml: 0.5
+                  }}
+                >
+                  {displayVal}
+                </Typography>
+              </li>
+            )
+          })}
+        </Box>
+
+        {renderMedia()}
+        <BulletField label='Goals for Next Period' value={formData?.goalsNext} />
+        {renderReviewDates()}
+        {renderSupportingDocs()}
+      </>
+    )
+  }
+
+  const renderGeneric = () => {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {conf.fields.map(f => {
+          if (f.key === 'evidenceLink' || f.key === 'portfolio') return null
+
+          return f.bullet ? (
+            <BulletField key={f.key} label={f.label} value={formData?.[f.key]} />
+          ) : (
+            <TextField
+              key={f.key}
+              label={f.label}
+              value={formData?.[f.key]}
+              isHtml={f.isHtml}
+              isRating={f.isRating}
+            />
+          )
+        })}
+        {renderMedia()}
+        {renderSupportingDocs()}
       </Box>
     )
   }
@@ -309,22 +559,9 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => 
         <Body sx={{ backgroundColor: hideHeader ? '#fff' : '#87abe4' }}>
           <PreviewCard>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                {conf.fields.map(f =>
-                  f.bullet ? (
-                    <BulletField key={f.key} label={f.label} value={formData?.[f.key]} />
-                  ) : (
-                    <TextField
-                      key={f.key}
-                      label={f.label}
-                      value={formData?.[f.key]}
-                      isHtml={f.isHtml}
-                    />
-                  )
-                )}
-                {renderMedia()}
-                {renderSupportingDocs()}
-              </Box>
+              {segment === 'performance-review'
+                ? renderPerformanceReview()
+                : renderGeneric()}
             </CardContent>
           </PreviewCard>
         </Body>

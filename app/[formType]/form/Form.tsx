@@ -7,7 +7,6 @@ import { FormControl, Box, Slide } from '@mui/material'
 import { FormData } from './types/Types'
 import { Step0 } from './Steps/Step0_connectToGoogle'
 import { Buttons } from './buttons/Buttons'
-import DataComponent from './Steps/dataPreview'
 import { createDID, signCred } from '../../utils/signCred'
 import { GoogleDriveStorage, saveToGoogleDrive } from '@cooperation/vc-storage'
 import { useSession, signIn } from 'next-auth/react'
@@ -18,7 +17,8 @@ import { useStepContext } from './StepContext'
 import SuccessPage from './Steps/SuccessPage'
 import FileUploadAndList from './Steps/Step3_uploadEvidence'
 import { Step1 } from './Steps/Step1_userName'
-import { Step2 } from './Steps/Step2_descreptionFields'
+import { Step2 } from './Steps/Step2_descriptionFields'
+import { Step3_performanceReviewFields } from './Steps/Step3_performanceReviewFields'
 import { storeFileTokens } from '../../firebase/storage'
 import {
   incrementCredentialTypeCount,
@@ -49,6 +49,8 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
   const refreshToken = session?.refreshToken as string | undefined
   const userEmail = session?.user?.email
   const storage = new GoogleDriveStorage(accessToken ?? '')
+
+  const isPerformanceReview = formType === 'performance-review'
 
   const {
     register,
@@ -88,7 +90,14 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
       documentType: '',
       documentNumber: '',
       issuingCountry: '',
-      expirationDate: ''
+      expirationDate: '',
+      reviewEndDate: '',
+      reviewStartDate: '',
+      reviewDuration: '',
+      jobKnowledgeRating: '',
+      teamworkRating: '',
+      initiativeRating: '',
+      communicationRating: ''
     },
     mode: 'onChange',
     reValidateMode: 'onChange'
@@ -98,10 +107,14 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
 
   useEffect(() => {
     if (formType) {
-      setActiveStep(0)
+      if (accessToken) {
+        setActiveStep(1)
+      } else {
+        setActiveStep(0)
+      }
       reset()
     }
-  }, [formType, setActiveStep, reset])
+  }, [formType, setActiveStep, reset, accessToken])
 
   useEffect(() => {
     setPrevStep(activeStep + 1)
@@ -281,7 +294,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
       >
         <Box sx={{ width: '100%', maxWidth: '720px' }}>
           <FormControl sx={{ width: '100%' }}>
-            {activeStep === 0 && (
+            {activeStep === 0 && !accessToken && (
               <Slide in direction={direction} timeout={500}>
                 <Box>
                   <Step0 />
@@ -315,7 +328,14 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
                 </Box>
               </Slide>
             )}
-            {activeStep === 3 && (
+            {activeStep === 3 && isPerformanceReview && (
+              <Slide in direction={direction}>
+                <Box>
+                  <Step3_performanceReviewFields />
+                </Box>
+              </Slide>
+            )}
+            {activeStep === 3 && !isPerformanceReview && (
               <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
                 <FileUploadAndList
                   watch={watch}
@@ -326,7 +346,18 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
                 />
               </Box>
             )}
-            {activeStep === 4 && (
+            {activeStep === 4 && isPerformanceReview && (
+              <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <FileUploadAndList
+                  watch={watch}
+                  selectedFiles={selectedFiles}
+                  setSelectedFiles={setSelectedFiles}
+                  setValue={setValue}
+                  formType={formType}
+                />
+              </Box>
+            )}
+            {activeStep === 4 && !isPerformanceReview && (
               <Slide in direction={direction}>
                 <Box>
                   <Box
@@ -365,7 +396,64 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
                 </Box>
               </Slide>
             )}
-            {activeStep === 5 && (
+            {activeStep === 5 && isPerformanceReview && (
+              <Slide in direction={direction}>
+                <Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 1,
+                      mb: 2
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        fontFamily: 'Lato',
+                        fontSize: '24px',
+                        fontWeight: 400,
+                        textAlign: 'center'
+                      }}
+                    >
+                      Step 5
+                    </Box>
+                    <Box
+                      sx={{
+                        fontFamily: 'Lato',
+                        fontSize: '16px',
+                        fontWeight: 400,
+                        textAlign: 'center',
+                        mb: 1
+                      }}
+                    >
+                      Please review your credential before signing.
+                    </Box>
+                    <StepTrackShape />
+                  </Box>
+                  <CredentialTracker formData={watch()} hideHeader={true} />
+                </Box>
+              </Slide>
+            )}
+            {activeStep === 5 && !isPerformanceReview && (
+              <Slide in direction={direction}>
+                <Box>
+                  <SuccessPage
+                    formData={watch()}
+                    setActiveStep={setActiveStep}
+                    reset={reset}
+                    link={link}
+                    setLink={setLink}
+                    setFileId={setFileId}
+                    fileId={fileId}
+                    storageOption={watch('storageOption')}
+                    res={res}
+                    selectedImage=''
+                  />
+                </Box>
+              </Slide>
+            )}
+            {activeStep === 6 && isPerformanceReview && (
               <Slide in direction={direction}>
                 <Box>
                   <SuccessPage
@@ -385,17 +473,27 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
             )}
           </FormControl>
         </Box>
-        {activeStep !== 5 && (
-          <Buttons
-            activeStep={activeStep}
-            handleNext={activeStep === 0 ? costumedHandleNextStep : handleNext}
-            handleSign={() => handleSign(activeStep, setActiveStep, handleFormSubmit)}
-            handleBack={costumedHandleBackStep}
-            isValid={isValid}
-            handleSaveSession={handleSaveSession}
-            loading={loading}
-          />
-        )}
+        {(() => {
+          const successStep = isPerformanceReview ? 6 : 5
+          const previewStep = isPerformanceReview ? 5 : 4
+
+          if (activeStep !== successStep) {
+            return (
+              <Buttons
+                activeStep={activeStep}
+                handleNext={activeStep === 0 ? costumedHandleNextStep : handleNext}
+                handleSign={() => handleSign(activeStep, setActiveStep, handleFormSubmit)}
+                handleBack={costumedHandleBackStep}
+                isValid={isValid}
+                handleSaveSession={handleSaveSession}
+                loading={loading}
+                isPerformanceReview={isPerformanceReview}
+                maxStepsBeforeSign={previewStep}
+              />
+            )
+          }
+          return null
+        })()}
         {errorMessage && (
           <div
             style={{
@@ -408,9 +506,17 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
         )}
         {snackMessage && <SnackMessage message={snackMessage} />}
       </Box>
-      {activeStep >= 1 && activeStep !== 4 && (
-        <CredentialTracker formData={formValues} hideHeader={false} />
-      )}
+      {(() => {
+        const previewStep = isPerformanceReview ? 5 : 4
+        if (
+          activeStep >= 1 &&
+          activeStep !== previewStep &&
+          activeStep < (isPerformanceReview ? 6 : 5)
+        ) {
+          return <CredentialTracker formData={formValues} hideHeader={false} />
+        }
+        return null
+      })()}
     </Box>
   )
 }
