@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, FormProvider } from 'react-hook-form'
 import { FormControl, Box, Slide } from '@mui/material'
 import { FormData } from './types/Types'
 import { Step0 } from './Steps/Step0_connectToGoogle'
@@ -52,16 +52,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
 
   const isPerformanceReview = formType === 'performance-review'
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-    setValue,
-    control,
-    trigger,
-    formState: { errors, isValid }
-  } = useForm<FormData>({
+  const methods = useForm<FormData>({
     defaultValues: {
       storageOption: 'Google Drive',
       fullName: session?.user?.name ?? '',
@@ -103,7 +94,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
     reValidateMode: 'onChange'
   })
 
-  const formValues = watch()
+  const formValues = methods.watch()
 
   useEffect(() => {
     if (formType) {
@@ -112,9 +103,9 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
       } else {
         setActiveStep(0)
       }
-      reset()
+      methods.reset()
     }
-  }, [formType, setActiveStep, reset, accessToken])
+  }, [formType, setActiveStep, methods, accessToken])
 
   useEffect(() => {
     setPrevStep(activeStep + 1)
@@ -129,7 +120,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
   const costumedHandleNextStep = async () => {
     if (
       activeStep === 0 &&
-      watch('storageOption') === 'Google Drive' &&
+      methods.watch('storageOption') === 'Google Drive' &&
       !accessToken &&
       !hasSignedIn
     ) {
@@ -145,11 +136,11 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
   const costumedHandleBackStep = async () => {
     if (activeStep > 0) {
       handleBack()
-      await trigger()
+      await methods.trigger()
     }
   }
 
-  const handleFormSubmit = handleSubmit(async (d: FormData) => {
+  const handleFormSubmit = methods.handleSubmit(async (d: FormData) => {
     try {
       await sign(d)
     } catch {
@@ -171,6 +162,20 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
 
     if (formType === 'volunteer' && data.volunteerWork) {
       ;(data as any).credentialName = data.volunteerWork
+    }
+
+    if (formType === 'performance-review') {
+      if (!data.reviewDuration || data.reviewDuration.trim() === '') {
+        const startDate = data.reviewStartDate
+          ? new Date(data.reviewStartDate).toLocaleDateString()
+          : ''
+        const endDate = data.reviewEndDate
+          ? new Date(data.reviewEndDate).toLocaleDateString()
+          : ''
+        data.reviewDuration = `From ${startDate} to ${endDate}`
+      }
+      delete data.reviewStartDate
+      delete data.reviewEndDate
     }
 
     if (!accessToken) {
@@ -216,7 +221,6 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
           }
         }
 
-        // Check for evidence and increment evidence attachment rate
         const hasPortfolioEvidence = data.portfolio && data.portfolio.length > 0
         const hasLinkEvidence = data.evidenceLink && data.evidenceLink.trim() !== ''
 
@@ -224,10 +228,8 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
           const evidenceTypeMap: Record<string, keyof EvidenceAttachmentRates> = {
             skill: 'skillVCs',
             volunteer: 'volunteerVCs',
-            role: 'employmentVCs', // Assuming 'role' formType maps to 'employmentVCs'
+            role: 'employmentVCs',
             'performance-review': 'performanceReviews'
-            // Note: idVerification typically might not have evidence in the same way,
-            // but can be added if needed.
           }
           const fbEvidenceType = evidenceTypeMap[formType]
 
@@ -254,7 +256,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
 
   const handleSaveSession = async () => {
     try {
-      const current = watch()
+      const current = methods.watch()
       setSnackMessage('Successfully saved in Your ' + current.storageOption)
       if (!accessToken) {
         setErrorMessage('Access token is missing')
@@ -267,257 +269,260 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
   }
 
   return (
-    <Box
-      sx={{
-        m: { xs: '50px auto', md: '120px auto' },
-        display: 'flex',
-        gap: '90px',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        p: { xs: '0 20px', md: '0' }
-      }}
-    >
+    <FormProvider {...methods}>
       <Box
-        component='form'
-        onSubmit={handleFormSubmit}
         sx={{
+          m: { xs: '50px auto', md: '120px auto' },
           display: 'flex',
-          flexDirection: 'column',
-          gap: '30px',
-          alignItems: 'center',
-          padding: '20px',
-          overflow: 'auto',
-          width: '100%',
-          maxWidth: '720px',
-          backgroundColor: { xs: 'transparent', md: '#FFF' }
+          gap: '90px',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          p: { xs: '0 20px', md: '0' }
         }}
       >
-        <Box sx={{ width: '100%', maxWidth: '720px' }}>
-          <FormControl sx={{ width: '100%' }}>
-            {activeStep === 0 && !accessToken && (
-              <Slide in direction={direction} timeout={500}>
-                <Box>
-                  <Step0 />
-                </Box>
-              </Slide>
-            )}
-            {activeStep === 1 && (
-              <Slide in direction={direction} timeout={500}>
-                <Box>
-                  <Step1
-                    watch={watch}
-                    setValue={setValue}
-                    register={register}
-                    errors={errors}
-                    handleNext={handleNext}
-                  />
-                </Box>
-              </Slide>
-            )}
-            {activeStep === 2 && (
-              <Slide in direction={direction}>
-                <Box>
-                  <Step2
-                    register={register}
-                    watch={watch}
-                    control={control}
-                    errors={errors}
-                    setValue={setValue}
+        <Box
+          component='form'
+          onSubmit={handleFormSubmit}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '30px',
+            alignItems: 'center',
+            padding: '20px',
+            overflow: 'auto',
+            width: '100%',
+            maxWidth: '720px',
+            backgroundColor: { xs: 'transparent', md: '#FFF' }
+          }}
+        >
+          <Box sx={{ width: '100%', maxWidth: '720px' }}>
+            <FormControl sx={{ width: '100%' }}>
+              {activeStep === 0 && !accessToken && (
+                <Slide in direction={direction} timeout={500}>
+                  <Box>
+                    <Step0 />
+                  </Box>
+                </Slide>
+              )}
+              {activeStep === 1 && (
+                <Slide in direction={direction} timeout={500}>
+                  <Box>
+                    <Step1
+                      watch={methods.watch}
+                      setValue={methods.setValue}
+                      register={methods.register}
+                      errors={methods.formState.errors}
+                      handleNext={handleNext}
+                    />
+                  </Box>
+                </Slide>
+              )}
+              {activeStep === 2 && (
+                <Slide in direction={direction}>
+                  <Box>
+                    <Step2
+                      register={methods.register}
+                      watch={methods.watch}
+                      control={methods.control}
+                      errors={methods.formState.errors}
+                      setValue={methods.setValue}
+                      formType={formType}
+                    />
+                  </Box>
+                </Slide>
+              )}
+              {activeStep === 3 && isPerformanceReview && (
+                <Slide in direction={direction}>
+                  <Box>
+                    <Step3_performanceReviewFields />
+                  </Box>
+                </Slide>
+              )}
+              {activeStep === 3 && !isPerformanceReview && (
+                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                  <FileUploadAndList
+                    watch={methods.watch}
+                    selectedFiles={selectedFiles}
+                    setSelectedFiles={setSelectedFiles}
+                    setValue={methods.setValue}
                     formType={formType}
                   />
                 </Box>
-              </Slide>
-            )}
-            {activeStep === 3 && isPerformanceReview && (
-              <Slide in direction={direction}>
-                <Box>
-                  <Step3_performanceReviewFields />
-                </Box>
-              </Slide>
-            )}
-            {activeStep === 3 && !isPerformanceReview && (
-              <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                <FileUploadAndList
-                  watch={watch}
-                  selectedFiles={selectedFiles}
-                  setSelectedFiles={setSelectedFiles}
-                  setValue={setValue}
-                  formType={formType}
-                />
-              </Box>
-            )}
-            {activeStep === 4 && isPerformanceReview && (
-              <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                <FileUploadAndList
-                  watch={watch}
-                  selectedFiles={selectedFiles}
-                  setSelectedFiles={setSelectedFiles}
-                  setValue={setValue}
-                  formType={formType}
-                />
-              </Box>
-            )}
-            {activeStep === 4 && !isPerformanceReview && (
-              <Slide in direction={direction}>
-                <Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 1,
-                      mb: 2
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        fontFamily: 'Lato',
-                        fontSize: '24px',
-                        fontWeight: 400,
-                        textAlign: 'center'
-                      }}
-                    >
-                      Step 4
-                    </Box>
-                    <Box
-                      sx={{
-                        fontFamily: 'Lato',
-                        fontSize: '16px',
-                        fontWeight: 400,
-                        textAlign: 'center',
-                        mb: 1
-                      }}
-                    >
-                      Please review your credential before signing.
-                    </Box>
-                    <StepTrackShape />
-                  </Box>
-                  <CredentialTracker formData={watch()} hideHeader={true} />
-                </Box>
-              </Slide>
-            )}
-            {activeStep === 5 && isPerformanceReview && (
-              <Slide in direction={direction}>
-                <Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 1,
-                      mb: 2
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        fontFamily: 'Lato',
-                        fontSize: '24px',
-                        fontWeight: 400,
-                        textAlign: 'center'
-                      }}
-                    >
-                      Step 5
-                    </Box>
-                    <Box
-                      sx={{
-                        fontFamily: 'Lato',
-                        fontSize: '16px',
-                        fontWeight: 400,
-                        textAlign: 'center',
-                        mb: 1
-                      }}
-                    >
-                      Please review your credential before signing.
-                    </Box>
-                    <StepTrackShape />
-                  </Box>
-                  <CredentialTracker formData={watch()} hideHeader={true} />
-                </Box>
-              </Slide>
-            )}
-            {activeStep === 5 && !isPerformanceReview && (
-              <Slide in direction={direction}>
-                <Box>
-                  <SuccessPage
-                    formData={watch()}
-                    setActiveStep={setActiveStep}
-                    reset={reset}
-                    link={link}
-                    setLink={setLink}
-                    setFileId={setFileId}
-                    fileId={fileId}
-                    storageOption={watch('storageOption')}
-                    res={res}
-                    selectedImage=''
+              )}
+              {activeStep === 4 && isPerformanceReview && (
+                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                  <FileUploadAndList
+                    watch={methods.watch}
+                    selectedFiles={selectedFiles}
+                    setSelectedFiles={setSelectedFiles}
+                    setValue={methods.setValue}
+                    formType={formType}
                   />
                 </Box>
-              </Slide>
-            )}
-            {activeStep === 6 && isPerformanceReview && (
-              <Slide in direction={direction}>
-                <Box>
-                  <SuccessPage
-                    formData={watch()}
-                    setActiveStep={setActiveStep}
-                    reset={reset}
-                    link={link}
-                    setLink={setLink}
-                    setFileId={setFileId}
-                    fileId={fileId}
-                    storageOption={watch('storageOption')}
-                    res={res}
-                    selectedImage=''
-                  />
-                </Box>
-              </Slide>
-            )}
-          </FormControl>
+              )}
+              {activeStep === 4 && !isPerformanceReview && (
+                <Slide in direction={direction}>
+                  <Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 1,
+                        mb: 2
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          fontFamily: 'Lato',
+                          fontSize: '24px',
+                          fontWeight: 400,
+                          textAlign: 'center'
+                        }}
+                      >
+                        Step 4
+                      </Box>
+                      <Box
+                        sx={{
+                          fontFamily: 'Lato',
+                          fontSize: '16px',
+                          fontWeight: 400,
+                          textAlign: 'center',
+                          mb: 1
+                        }}
+                      >
+                        Please review your credential before signing.
+                      </Box>
+                      <StepTrackShape />
+                    </Box>
+                    <CredentialTracker formData={methods.watch()} hideHeader={true} />
+                  </Box>
+                </Slide>
+              )}
+              {activeStep === 5 && isPerformanceReview && (
+                <Slide in direction={direction}>
+                  <Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 1,
+                        mb: 2
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          fontFamily: 'Lato',
+                          fontSize: '24px',
+                          fontWeight: 400,
+                          textAlign: 'center'
+                        }}
+                      >
+                        Step 5
+                      </Box>
+                      <Box
+                        sx={{
+                          fontFamily: 'Lato',
+                          fontSize: '16px',
+                          fontWeight: 400,
+                          textAlign: 'center',
+                          mb: 1
+                        }}
+                      >
+                        Please review your credential before signing.
+                      </Box>
+                      <StepTrackShape />
+                    </Box>
+                    <CredentialTracker formData={methods.watch()} hideHeader={true} />
+                  </Box>
+                </Slide>
+              )}
+              {activeStep === 5 && !isPerformanceReview && (
+                <Slide in direction={direction}>
+                  <Box>
+                    <SuccessPage
+                      formData={methods.watch()}
+                      setActiveStep={setActiveStep}
+                      reset={methods.reset}
+                      link={link}
+                      setLink={setLink}
+                      setFileId={setFileId}
+                      fileId={fileId}
+                      storageOption={methods.watch('storageOption')}
+                      res={res}
+                      selectedImage=''
+                    />
+                  </Box>
+                </Slide>
+              )}
+              {activeStep === 6 && isPerformanceReview && (
+                <Slide in direction={direction}>
+                  <Box>
+                    <SuccessPage
+                      formData={methods.watch()}
+                      setActiveStep={setActiveStep}
+                      reset={methods.reset}
+                      link={link}
+                      setLink={setLink}
+                      setFileId={setFileId}
+                      fileId={fileId}
+                      storageOption={methods.watch('storageOption')}
+                      res={res}
+                      selectedImage=''
+                    />
+                  </Box>
+                </Slide>
+              )}
+            </FormControl>
+          </Box>
+          {(() => {
+            const successStep = isPerformanceReview ? 6 : 5
+            const previewStep = isPerformanceReview ? 5 : 4
+
+            if (activeStep !== successStep) {
+              return (
+                <Buttons
+                  activeStep={activeStep}
+                  handleBack={costumedHandleBackStep}
+                  loading={loading || methods.formState.isSubmitting}
+                  isValid={methods.formState.isValid}
+                  handleNext={costumedHandleNextStep}
+                  isPerformanceReview={isPerformanceReview}
+                  handleSign={() =>
+                    handleSign(activeStep, setActiveStep, handleFormSubmit)
+                  }
+                  handleSaveSession={handleSaveSession}
+                />
+              )
+            }
+            return null
+          })()}
+          {errorMessage && (
+            <div
+              style={{
+                color: errorMessage.includes('MetaMask') ? 'red' : 'black',
+                textAlign: 'center'
+              }}
+            >
+              {errorMessage}
+            </div>
+          )}
+          {snackMessage && <SnackMessage message={snackMessage} />}
         </Box>
         {(() => {
-          const successStep = isPerformanceReview ? 6 : 5
           const previewStep = isPerformanceReview ? 5 : 4
-
-          if (activeStep !== successStep) {
-            return (
-              <Buttons
-                activeStep={activeStep}
-                handleNext={activeStep === 0 ? costumedHandleNextStep : handleNext}
-                handleSign={() => handleSign(activeStep, setActiveStep, handleFormSubmit)}
-                handleBack={costumedHandleBackStep}
-                isValid={isValid}
-                handleSaveSession={handleSaveSession}
-                loading={loading}
-                isPerformanceReview={isPerformanceReview}
-                maxStepsBeforeSign={previewStep}
-              />
-            )
+          if (
+            activeStep >= 1 &&
+            activeStep !== previewStep &&
+            activeStep < (isPerformanceReview ? 6 : 5)
+          ) {
+            return <CredentialTracker formData={formValues} hideHeader={false} />
           }
           return null
         })()}
-        {errorMessage && (
-          <div
-            style={{
-              color: errorMessage.includes('MetaMask') ? 'red' : 'black',
-              textAlign: 'center'
-            }}
-          >
-            {errorMessage}
-          </div>
-        )}
-        {snackMessage && <SnackMessage message={snackMessage} />}
       </Box>
-      {(() => {
-        const previewStep = isPerformanceReview ? 5 : 4
-        if (
-          activeStep >= 1 &&
-          activeStep !== previewStep &&
-          activeStep < (isPerformanceReview ? 6 : 5)
-        ) {
-          return <CredentialTracker formData={formValues} hideHeader={false} />
-        }
-        return null
-      })()}
-    </Box>
+    </FormProvider>
   )
 }
 

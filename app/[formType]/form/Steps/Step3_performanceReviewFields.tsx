@@ -163,7 +163,7 @@ export const Step3_performanceReviewFields: React.FC<
             }
             label='Show duration instead of exact dates'
           />
-          <Tooltip title='Toggle to enter a flexible duration like "Q1 2023" or "First Half of the Year" instead of specific start and end dates.'>
+          <Tooltip title='If this Performance Review will be made public, setting the review dates to ‘Duration Only’ can help protect the personal details of both the employee and the company.'>
             <InfoIcon sx={{ color: 'action.active', ml: 0.5 }} />
           </Tooltip>
         </Grid>
@@ -178,15 +178,38 @@ export const Step3_performanceReviewFields: React.FC<
             name={field.name}
             control={control}
             render={({ field: controllerField }) => (
-              <RadioGroup row {...controllerField}>
+              <RadioGroup
+                row
+                {...controllerField}
+                sx={{ justifyContent: 'space-between' }}
+              >
                 {[1, 2, 3, 4, 5].map(value => (
-                  <FormControlLabel
+                  <Box
                     key={value}
-                    value={String(value)}
-                    control={<Radio />}
-                    label={String(value)}
-                    sx={{ mr: 1 }}
-                  />
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <FormControlLabel
+                      value={String(value)}
+                      control={<Radio />}
+                      label={String(value)}
+                      labelPlacement='top'
+                      sx={{ mr: 0, ml: 0 }}
+                    />
+                    {value === 1 && (
+                      <Typography variant='caption' sx={{ textAlign: 'center' }}>
+                        Needs work
+                      </Typography>
+                    )}
+                    {value === 5 && (
+                      <Typography variant='caption' sx={{ textAlign: 'center' }}>
+                        Excellent
+                      </Typography>
+                    )}
+                  </Box>
                 ))}
               </RadioGroup>
             )}
@@ -199,35 +222,55 @@ export const Step3_performanceReviewFields: React.FC<
         </Box>
       ))}
 
-      <Box sx={{ mb: 2 }}>
-        <Typography variant='subtitle1' gutterBottom>
-          Overall Performance Rating ({overallRating || '-'}/5)
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}
+      >
+        <Typography variant='subtitle1' gutterBottom sx={{ mb: 0, mr: 1 }}>
+          Overall Performance Rating:
         </Typography>
-        <Controller
-          name='overallRating'
-          control={control}
-          render={({ field: controllerField }) => (
-            <Slider
-              value={parseFloat(controllerField.value || '0')}
-              onChange={(_, newValue) => {
-                controllerField.onChange(String(newValue))
-                setOverallRatingManuallySet(true)
-              }}
-              aria-labelledby='overall-rating-slider'
-              valueLabelDisplay='auto'
-              step={0.1}
-              marks
-              min={1}
-              max={5}
-            />
-          )}
-        />
-        {errors.overallRating && (
-          <Typography color='error' variant='caption'>
-            {errors.overallRating?.message}
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Controller
+            name='overallRating'
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                type='number'
+                variant='outlined'
+                size='small'
+                inputProps={{ step: '0.1', min: '0', max: '5' }}
+                sx={{
+                  width: '70px',
+                  textAlign: 'center',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '4px'
+                }}
+                onChange={e => {
+                  field.onChange(e.target.value)
+                  setOverallRatingManuallySet(true)
+                }}
+              />
+            )}
+          />
+          <Typography variant='body1' sx={{ ml: 0.5 }}>
+            / 5
           </Typography>
-        )}
+        </Box>
       </Box>
+      {errors.overallRating && (
+        <Typography
+          color='error'
+          variant='caption'
+          sx={{ display: 'block', textAlign: 'right', mt: -2, mb: 1 }}
+        >
+          {errors.overallRating?.message}
+        </Typography>
+      )}
 
       <TextField
         label='Review Comments / Key Achievements'
