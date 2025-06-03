@@ -130,7 +130,7 @@ const Footer: React.FC = () => {
             />
             <FooterItem
               icon={<GitHubIcon />}
-              text='Source Code: https://github.com/Cooperation-org/linked-claims-author'
+              text='Source Code: Cooperation-org/linked-claims-author'
               href='https://github.com/Cooperation-org/linked-claims-author'
               isSourceCode={true}
             />
@@ -190,7 +190,7 @@ const Footer: React.FC = () => {
             >
               <FooterItem
                 icon={<GitHubIcon />}
-                text='Source Code: https://github.com/Cooperation-org/linked-claims-author'
+                text='Source Code: Cooperation-org/linked-claims-author'
                 href='https://github.com/Cooperation-org/linked-claims-author'
                 isSourceCode={true}
               />
@@ -226,7 +226,7 @@ const Footer: React.FC = () => {
             />
             <FooterItem
               icon={<GitHubIcon />}
-              text='Source Code: https://github.com/Cooperation-org/linked-claims-author'
+              text='Source Code: Cooperation-org/linked-claims-author'
               href='https://github.com/Cooperation-org/linked-claims-author'
               isSourceCode={true}
             />
@@ -283,10 +283,10 @@ const FooterItem: React.FC<FooterItemProps> = ({ icon, text, href, isSourceCode 
       {isSourceCode ? (
         <Box sx={{ ml: 1.5 }}>
           <Typography component='span' sx={{ ...textStyle, ml: 0 }}>
-            Source Code:{' '}
+            Source Code: &nbsp;
           </Typography>
           <Typography component='span' sx={{ ...linkStyle, ml: 0 }}>
-            https://github.com/Cooperation-org/linked-claims-author
+            Cooperation-org/linked-claims-author
           </Typography>
         </Box>
       ) : (

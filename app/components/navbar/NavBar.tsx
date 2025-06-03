@@ -1,6 +1,15 @@
 import { useTheme } from '@mui/material/styles'
 import React from 'react'
-import { Box, Typography, Button } from '@mui/material'
+import {
+  Box,
+  Typography,
+  Button,
+  Avatar,
+  IconButton,
+  Menu,
+  MenuItem
+} from '@mui/material'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signIn, signOut } from 'next-auth/react'
@@ -11,6 +20,23 @@ const NavBar = () => {
   const theme = useTheme()
   const pathname = usePathname()
   const { data: session } = useSession()
+
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
+  const open = Boolean(anchorEl)
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
+  const handleSignOut = () => {
+    signOut()
+    localStorage.clear()
+    handleClose()
+  }
 
   const isActive = (path: string): boolean => pathname === path
 
@@ -232,24 +258,37 @@ const NavBar = () => {
 
         {/* Sign In/Out Button */}
         {session ? (
-          <Button
-            sx={{
-              width: '148px',
-              fontFamily: 'roboto',
-              fontSize: '16px',
-              fontWeight: '500',
-              lineHeight: '20px',
-              textAlign: 'center',
-              justifyContent: 'center'
-            }}
-            variant='actionButton'
-            onClick={() => {
-              signOut()
-              localStorage.clear()
-            }}
-          >
-            Sign Out
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Avatar
+              src={session.user?.image ?? ''}
+              alt={session.user?.name || 'User Avatar'}
+              sx={{ width: 40, height: 40 }}
+            />
+            <Typography sx={{ color: theme.palette.t3DarkSlateBlue, fontWeight: '500' }}>
+              {session.user?.name}
+            </Typography>
+            <IconButton
+              aria-label='more'
+              id='long-button'
+              aria-controls={open ? 'long-menu' : undefined}
+              aria-expanded={open ? 'true' : undefined}
+              aria-haspopup='true'
+              onClick={handleClick}
+            >
+              <MoreVertIcon />
+            </IconButton>
+            <Menu
+              id='long-menu'
+              MenuListProps={{
+                'aria-labelledby': 'long-button'
+              }}
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+            >
+              <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
+            </Menu>
+          </Box>
         ) : (
           <Button
             sx={{
