@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Typography,
@@ -22,6 +22,7 @@ import {
 import { FormData } from '../types/Types'
 import { StepTrackShape } from '../fromTexts & stepTrack/StepTrackShape'
 import { SVGDescribeBadge } from '../../../Assets/SVGs'
+import EmailVerification from '../../../verifyEmail/page'
 
 interface Step2Props {
   register: UseFormRegister<FormData>
@@ -154,6 +155,7 @@ export function Step2({
   setValue,
   formType
 }: Readonly<Step2Props>) {
+  const [isEmailVerified, setIsEmailVerified] = useState(false)
   const config = formConfigs[formType] || formConfigs.skill
 
   const renderInputField = (field: FieldDef) => {
@@ -224,7 +226,7 @@ export function Step2({
           error={!!errors[field.name]}
           helperText={
             (errors[field.name]?.message ?? field.max)
-              ? `${(watch(field.name) ?? '').length}/${field.max} characters`
+              ? `${String(watch(field.name) ?? '').length}/${field.max} characters`
               : ''
           }
           placeholder={placeholder}
@@ -245,6 +247,38 @@ export function Step2({
     )
   }
 
+  // For role type, show email verification first, then fields after verification
+  if (formType === 'role' && !isEmailVerified) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '30px',
+          alignItems: 'center'
+        }}
+      >
+        <SVGDescribeBadge />
+        <Typography sx={{ fontFamily: 'Lato', fontSize: '24px', fontWeight: 400 }}>
+          {config.title}
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: 'Lato',
+            fontSize: '16px',
+            fontWeight: 400,
+            maxWidth: '360px',
+            textAlign: 'center'
+          }}
+        >
+          First, let&apos;s verify your email address.
+        </Typography>
+        <StepTrackShape />
+        <EmailVerification onVerificationSuccess={() => setIsEmailVerified(true)} />
+      </Box>
+    )
+  }
+
   return (
     <Box
       sx={{ display: 'flex', flexDirection: 'column', gap: '30px', alignItems: 'center' }}
@@ -262,7 +296,9 @@ export function Step2({
           textAlign: 'center'
         }}
       >
-        {config.description}
+        {formType === 'role' && isEmailVerified
+          ? 'Great! Now provide some information about your position.'
+          : config.description}
       </Typography>
       <StepTrackShape />
 
@@ -328,7 +364,7 @@ export function Step2({
                       {...field}
                       onChange={e => {
                         field.onChange(e)
-                        const currentValue = watch('volunteerDates')
+                        const currentValue = watch('volunteerDates') as string
                         if (e.target.checked) {
                           setValue('volunteerDates', `${currentValue} -present`)
                         } else {

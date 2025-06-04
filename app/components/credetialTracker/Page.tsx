@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { Box, Typography, Paper, styled, Card, CardContent, Divider } from '@mui/material'
+import {
+  Box,
+  Typography,
+  Paper,
+  styled,
+  Card,
+  CardContent,
+  Divider,
+  useStepContext
+} from '@mui/material'
 import { usePathname } from 'next/navigation'
 import { Logo, SVGBadgeCheck } from '../../Assets/SVGs'
 import Image from 'next/image'
@@ -103,6 +112,7 @@ const TextField = ({
 interface TrackerProps {
   formData?: Record<string, any>
   hideHeader?: boolean
+  activeStep?: number
 }
 
 type F = {
@@ -179,8 +189,13 @@ const cfg: Record<string, CFG> = {
   }
 }
 
-const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => {
+const CredentialTracker: React.FC<TrackerProps> = ({
+  formData,
+  hideHeader,
+  activeStep
+}) => {
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
+  console.log(': activeStep', activeStep)
   const conf = cfg[segment] || cfg.skill
   const [timeAgo, setTimeAgo] = useState('just now')
   const [lastChange, setLastChange] = useState(Date.now())
@@ -521,7 +536,10 @@ const CredentialTracker: React.FC<TrackerProps> = ({ formData, hideHeader }) => 
         p: 0,
         width: '100%',
         maxWidth: '720px',
-        display: { xs: 'none', md: 'block' }
+        display: {
+          xs: activeStep === 4 || segment === 'performance-review' ? 'block' : 'none',
+          md: 'block'
+        }
       }}
     >
       <Box

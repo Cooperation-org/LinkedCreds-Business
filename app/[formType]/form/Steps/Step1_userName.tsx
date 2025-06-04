@@ -23,9 +23,10 @@ interface Step1Props {
   watch: UseFormWatch<FormData>
   setValue: UseFormSetValue<FormData>
   handleNext: () => void
+  formType: string
 }
 
-export function Step1({ register, errors, handleNext }: Readonly<Step1Props>) {
+export function Step1({ register, errors, handleNext, formType }: Readonly<Step1Props>) {
   const { data: session } = useSession()
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -77,6 +78,26 @@ export function Step1({ register, errors, handleNext }: Readonly<Step1Props>) {
           onKeyDown={handleKeyDown}
         />
       </Box>
+      {formType === 'role' && (
+        <Box sx={{ width: '100%' }}>
+          <FormLabel sx={formLabelStyles} id='name-label'>
+            Email (required)
+          </FormLabel>
+          <TextField
+            {...register('email', {
+              required: 'Email is required'
+            })}
+            placeholder={session?.user?.email ?? 'jdoe@examplecorp.com'}
+            variant='outlined'
+            sx={TextFieldStyles}
+            aria-labelledby='name-label'
+            inputProps={textFieldInputProps}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            onKeyDown={handleKeyDown}
+          />
+        </Box>
+      )}
     </Box>
   )
 }
