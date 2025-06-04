@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getVerificationCode, deleteVerificationCode } from '../../../utils/email-verification/verification-store'
+import { getVerificationCode, deleteVerificationCode } from '../../../firebase/verification'
 import { rateLimit } from '../../../utils/email-verification/rate-limit'
 
 const limiter = rateLimit({
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get stored code
-    const storedCode = getVerificationCode(email)
+    const storedCode = await getVerificationCode(email)
     
     if (!storedCode) {
       return NextResponse.json(
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Delete used code
-    deleteVerificationCode(email)
+    await deleteVerificationCode(email)
 
     return NextResponse.json({ success: true })
   } catch (error) {
