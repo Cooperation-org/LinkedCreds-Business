@@ -13,9 +13,7 @@ interface EmailVerificationProps {
   onVerificationSuccess?: () => void
 }
 
-export default function EmailVerification({
-  onVerificationSuccess
-}: EmailVerificationProps) {
+const EmailVerification = ({ onVerificationSuccess }: EmailVerificationProps) => {
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [state, setState] = useState<VerificationState>('idle')
   const [error, setError] = useState('')
@@ -299,3 +297,5 @@ export default function EmailVerification({
     </Box>
   )
 }
+
+export default EmailVerification
