@@ -313,6 +313,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
                       register={methods.register}
                       errors={methods.formState.errors}
                       handleNext={handleNext}
+                      formType={formType}
                     />
                   </Box>
                 </Slide>
@@ -395,7 +396,11 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
                       </Box>
                       <StepTrackShape />
                     </Box>
-                    <CredentialTracker formData={methods.watch()} hideHeader={true} />
+                    <CredentialTracker
+                      formData={methods.watch()}
+                      hideHeader={true}
+                      activeStep={activeStep}
+                    />
                   </Box>
                 </Slide>
               )}

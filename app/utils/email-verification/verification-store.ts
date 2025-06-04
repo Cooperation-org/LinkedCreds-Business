@@ -55,16 +55,20 @@ function hashEmail(email: string): string {
   return crypto.createHash('sha256').update(email.toLowerCase()).digest('hex')
 }
 
-export function storeVerificationCode(email: string, code: string, expiresInMinutes = 10) {
+export function storeVerificationCode(
+  email: string,
+  code: string,
+  expiresInMinutes = 10
+) {
   const cache = readCache()
   const hashedEmail = hashEmail(email)
-  
+
   cache[hashedEmail] = {
     code,
     email: email.toLowerCase(),
     expiresAt: Date.now() + expiresInMinutes * 60 * 1000
   }
-  
+
   writeCache(cache)
 }
 
@@ -72,22 +76,23 @@ export function getVerificationCode(email: string): string | null {
   const cache = readCache()
   const hashedEmail = hashEmail(email)
   const entry = cache[hashedEmail]
-  
+
   if (!entry) return null
-  
+
   if (Date.now() > entry.expiresAt) {
     delete cache[hashedEmail]
     writeCache(cache)
     return null
   }
-  
+  console.log(': getVerificationCode entry', entry)
+
   return entry.code
 }
 
 export function deleteVerificationCode(email: string) {
   const cache = readCache()
   const hashedEmail = hashEmail(email)
-  
+
   if (cache[hashedEmail]) {
     delete cache[hashedEmail]
     writeCache(cache)
@@ -100,4 +105,4 @@ export function getCacheSize(): number {
 
 export function getCacheKeys(): string[] {
   return Object.keys(readCache())
-} 
+}
