@@ -145,17 +145,21 @@ const FileListDisplay: React.FC<FileListProps> = ({
               <CardContent sx={{ p: 4, width: '100%' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   {isImage(f.name) && (
-                    <img
+                    <Image
                       src={f.url}
                       alt={f.name}
-                      style={{ width: 80, height: 80, borderRadius: 8 }}
+                      width={80}
+                      height={80}
+                      style={{ borderRadius: 8 }}
                     />
                   )}
                   {isPDF(f.name) && (
-                    <img
+                    <Image
                       src={pdfThumbs[f.id] ?? '/fallback-pdf-thumbnail.svg'}
                       alt={f.name}
-                      style={{ width: 80, height: 80, borderRadius: 8 }}
+                      width={80}
+                      height={80}
+                      style={{ borderRadius: 8 }}
                     />
                   )}
                   {isMP4(f.name) && (
