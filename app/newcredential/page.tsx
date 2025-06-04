@@ -239,7 +239,7 @@ export default function NewCredentialPage() {
           flexDirection: 'column',
           alignItems: 'center',
           width: '100%',
-          mb: { xs: 4, md: 6 }
+          mb: { xs: 2, md: 2 }
         }}
       >
         <Typography
@@ -266,7 +266,7 @@ export default function NewCredentialPage() {
           What type of credential do you want to create?
         </Typography>
       </Box>
-      <Box sx={{ width: '100%', mt: { xs: 4, md: '15vh' }, mb: { xs: 4, md: '15vh' } }}>
+      <Box sx={{ width: '100%', mt: { xs: 4, md: '5vh' }, mb: { xs: 4, md: '5vh' } }}>
         {renderDesktopLayout()}
       </Box>
       <Box

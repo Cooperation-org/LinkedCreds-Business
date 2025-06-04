@@ -85,7 +85,7 @@ const StyledSectionTitle = styled(Typography)({
   fontFamily: 'Inter',
   fontSize: '32px',
   fontWeight: 600,
-  lineHeight: '24px',
+  lineHeight: '30px',
   marginBottom: '15px'
 })
 
@@ -193,7 +193,7 @@ export default function Main() {
 
   return (
     <Container maxWidth='lg' sx={{ py: 5 }}>
-      <Typography sx={{ fontWeight: 600, fontSize: '32px', lineHeight: '24px', mb: 6 }}>
+      <Typography sx={{ fontWeight: 600, fontSize: '32px', lineHeight: '30px', mb: 6 }}>
         Analytics for {session.user?.name || session.user?.email}
       </Typography>
       <Paper
