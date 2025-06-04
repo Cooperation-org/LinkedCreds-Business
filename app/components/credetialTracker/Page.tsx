@@ -195,7 +195,7 @@ const CredentialTracker: React.FC<TrackerProps> = ({
   activeStep
 }) => {
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
-  console.log(': activeStep', activeStep)
+  // console.log(': activeStep', activeStep)
   const conf = cfg[segment] || cfg.skill
   const [timeAgo, setTimeAgo] = useState('just now')
   const [lastChange, setLastChange] = useState(Date.now())
