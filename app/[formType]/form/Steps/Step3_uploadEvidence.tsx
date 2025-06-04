@@ -55,34 +55,35 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
   formType,
   ...props
 }) => {
+  const { setValue, selectedFiles, setSelectedFiles, watch } = props
   const { loading, setUploadImageFn, setLoading } = useStepContext()
   const [showLinkAdder, setShowLinkAdder] = useState(false)
   const { storage } = useGoogleDrive()
-  const [files, setFiles] = useState<FileItem[]>([...props.selectedFiles])
+  const [files, setFiles] = useState<FileItem[]>([...selectedFiles])
   const [links, setLinks] = useState<LinkItem[]>([
     { id: crypto.randomUUID(), name: '', url: '' }
   ])
 
   useEffect(() => {
-    setFiles([...props.selectedFiles])
-  }, [props.selectedFiles])
+    setFiles([...selectedFiles])
+  }, [selectedFiles])
 
   const handleFilesSelected = useCallback(
     (newFiles: FileItem[]) => {
       setFiles(newFiles)
-      props.setSelectedFiles(newFiles)
+      setSelectedFiles(newFiles)
     },
-    [props.setSelectedFiles]
+    [setSelectedFiles]
   )
 
   const handleReorder = useCallback(
     (reorderedFiles: FileItem[]) => {
       // Update local state
       setFiles(reorderedFiles)
-      props.setSelectedFiles(reorderedFiles)
+      setSelectedFiles(reorderedFiles)
 
       // Update portfolio items order in form
-      const currentPortfolio = props.watch<PortfolioItem[]>('portfolio') || []
+      const currentPortfolio = watch<PortfolioItem[]>('portfolio') || []
       const newPortfolioOrder = reorderedFiles
         .filter(file => file.googleId) // Only include uploaded files
         .map(file => ({
@@ -93,29 +94,29 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
 
       // If there's a featured file (first in the list), update the evidenceLink
       if (reorderedFiles[0]?.googleId) {
-        props.setValue(
+        setValue(
           'evidenceLink',
           `https://drive.google.com/uc?export=view&id=${reorderedFiles[0].googleId}`
         )
       }
 
       // Update the portfolio with the new order
-      props.setValue('portfolio', newPortfolioOrder)
+      setValue('portfolio', newPortfolioOrder)
     },
-    [props.setValue, props.watch, props.setSelectedFiles]
+    [setValue, watch, setSelectedFiles]
   )
 
   const handleUpload = useCallback(async () => {
     try {
-      if (props.selectedFiles.length === 0) return
-      const filesToUpload = props.selectedFiles.filter(
+      if (selectedFiles.length === 0) return
+      const filesToUpload = selectedFiles.filter(
         fileItem => !fileItem.uploaded && fileItem.file && fileItem.name
       )
       if (filesToUpload.length === 0) return
       const uploadedFiles = await Promise.all(
         filesToUpload.map(async (fileItem, index) => {
-          const newFile = new File([fileItem.file], fileItem.name, {
-            type: fileItem.file.type
+          const newFile = new File([fileItem.file!], fileItem.name, {
+            type: fileItem.file!.type
           })
           const uploadedFile = await storage?.uploadBinaryFile({
             file: newFile
@@ -125,25 +126,25 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
             ...fileItem,
             googleId: fileId,
             uploaded: true,
-            isFeatured: index === 0 && !props.watch<string>('evidenceLink')
+            isFeatured: index === 0 && !watch<string>('evidenceLink')
           }
         })
       )
       const featuredFile = uploadedFiles.find(file => file.isFeatured)
       if (featuredFile?.googleId) {
-        props.setValue(
+        setValue(
           'evidenceLink',
           `https://drive.google.com/uc?export=view&id=${featuredFile.googleId}`
         )
       }
-      const currentPortfolio = props.watch<PortfolioItem[]>('portfolio') || []
+      const currentPortfolio = watch<PortfolioItem[]>('portfolio') || []
       const newPortfolioEntries: PortfolioItem[] = uploadedFiles.map(file => ({
         name: file.name,
         url: `https://drive.google.com/uc?export=view&id=${file.googleId}`,
         googleId: file.googleId
       }))
-      props.setValue('portfolio', [...currentPortfolio, ...newPortfolioEntries])
-      props.setSelectedFiles(prevFiles =>
+      setValue('portfolio', [...currentPortfolio, ...newPortfolioEntries])
+      setSelectedFiles(prevFiles =>
         prevFiles.map(file => {
           const uploadedFile = uploadedFiles.find(f => f.name === file.name)
           return uploadedFile
@@ -155,7 +156,7 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
       console.error('Error uploading files:', error)
       throw error
     }
-  }, [props.selectedFiles, props.setValue, props.setSelectedFiles, storage, props.watch])
+  }, [selectedFiles, setValue, setSelectedFiles, storage, watch])
 
   const handleAddLink = useCallback(() => {
     setLinks(prev => [...prev, { id: crypto.randomUUID(), name: '', url: '' }])
@@ -164,13 +165,13 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
   const handleRemoveLink = useCallback(
     (index: number) => {
       setLinks(prev => prev.filter((_, i) => i !== index))
-      const currentPortfolio = props.watch<PortfolioItem[]>('portfolio') || []
-      props.setValue(
+      const currentPortfolio = watch<PortfolioItem[]>('portfolio') || []
+      setValue(
         'portfolio',
         currentPortfolio.filter((_, i) => i !== index)
       )
     },
-    [props.setValue, props.watch]
+    [setValue, watch]
   )
 
   const handleLinkChange = useCallback(
@@ -178,12 +179,19 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
       setLinks(prev =>
         prev.map((link, i) => (i === index ? { ...link, [field]: value } : link))
       )
-      const currentPortfolio = props.watch<PortfolioItem[]>('portfolio') || []
+      const currentPortfolio = watch<PortfolioItem[]>('portfolio') || []
       const updatedPortfolio = [...currentPortfolio]
-      updatedPortfolio[index] = { ...updatedPortfolio[index], [field]: value }
-      props.setValue('portfolio', updatedPortfolio)
+      if (updatedPortfolio[index]) {
+        updatedPortfolio[index] = { ...updatedPortfolio[index], [field]: value }
+      } else {
+        const newLinkEntry: PortfolioItem = { name: '', url: '' }
+        if (field === 'name') newLinkEntry.name = value
+        if (field === 'url') newLinkEntry.url = value
+        updatedPortfolio[index] = newLinkEntry
+      }
+      setValue('portfolio', updatedPortfolio)
     },
-    [props.setValue, props.watch]
+    [setValue, watch]
   )
 
   const handleNameChange = useCallback(
@@ -191,9 +199,9 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
       const updateFiles = (prevFiles: FileItem[]) =>
         prevFiles.map(file => (file.id === id ? { ...file, name: newName } : file))
       setFiles(updateFiles)
-      props.setSelectedFiles(updateFiles)
+      setSelectedFiles(updateFiles)
     },
-    [props.setSelectedFiles]
+    [setSelectedFiles]
   )
 
   const setAsFeatured = useCallback(
@@ -203,43 +211,61 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
           .map(file => ({ ...file, isFeatured: file.id === id }))
           .sort((a, b) => (a.isFeatured === b.isFeatured ? 0 : a.isFeatured ? -1 : 1))
       setFiles(updateFiles)
-      props.setSelectedFiles(updateFiles)
+      setSelectedFiles(updateFiles)
     },
-    [props.setSelectedFiles]
+    [setSelectedFiles]
   )
 
   const handleDelete = useCallback(
     (event: React.MouseEvent, id: string) => {
       event.stopPropagation()
       let isFeaturedFileDeleted = false
+      let newFeaturedFileId: string | undefined = undefined
+
       setFiles(prevFiles => {
+        const originalFeaturedFile = prevFiles.find(f => f.isFeatured)
+        const isDeletingFeatured =
+          originalFeaturedFile?.googleId === id || originalFeaturedFile?.id === id
         const updatedFiles = prevFiles.filter(
           file => file.googleId !== id && file.id !== id
         )
-        isFeaturedFileDeleted = prevFiles[0]?.googleId === id || prevFiles[0]?.id === id
+        isFeaturedFileDeleted = isDeletingFeatured
+
         if (isFeaturedFileDeleted && updatedFiles.length > 0) {
           updatedFiles[0].isFeatured = true
+          newFeaturedFileId = updatedFiles[0].googleId
+        } else if (updatedFiles.length === 0) {
+          isFeaturedFileDeleted = true
+          newFeaturedFileId = undefined
         }
         return updatedFiles
       })
-      props.setSelectedFiles(prevFiles =>
+      setSelectedFiles(prevFiles =>
         prevFiles.filter(file => file.googleId !== id && file.id !== id)
       )
-      const currentPortfolio = props.watch<PortfolioItem[]>('portfolio') || []
+      const currentPortfolio = watch<PortfolioItem[]>('portfolio') || []
       let updatedPortfolio = currentPortfolio.filter(file => file.googleId !== id)
-      const newFeaturedFile = files[1]
-      if (isFeaturedFileDeleted && newFeaturedFile?.googleId) {
-        props.setValue(
-          'evidenceLink',
-          `https://drive.google.com/uc?export=view&id=${newFeaturedFile.googleId}`
-        )
-        updatedPortfolio = updatedPortfolio.filter(
-          file => file.googleId !== newFeaturedFile.googleId
-        )
+
+      if (isFeaturedFileDeleted) {
+        if (newFeaturedFileId) {
+          setValue(
+            'evidenceLink',
+            `https://drive.google.com/uc?export=view&id=${newFeaturedFileId}`
+          )
+        } else {
+          setValue('evidenceLink', '')
+        }
       }
-      props.setValue('portfolio', updatedPortfolio)
+      const remainingFileGoogleIds = files
+        .filter(f => f.googleId && f.googleId !== id && f.id !== id)
+        .map(f => f.googleId)
+      updatedPortfolio = updatedPortfolio.filter(p =>
+        remainingFileGoogleIds.includes(p.googleId)
+      )
+
+      setValue('portfolio', updatedPortfolio)
     },
-    [props.setValue, props.watch, files, props.setSelectedFiles]
+    [setValue, watch, files, setSelectedFiles]
   )
 
   useEffect(() => {

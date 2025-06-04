@@ -22,7 +22,7 @@ import {
 import { FormData } from '../types/Types'
 import { StepTrackShape } from '../fromTexts & stepTrack/StepTrackShape'
 import { SVGDescribeBadge } from '../../../Assets/SVGs'
-import EmailVerification from '../../../verifyEmail/page'
+import { EmailVerificationComponent } from '../../../verifyEmail/EmailVerificationComponent'
 
 interface Step2Props {
   register: UseFormRegister<FormData>
@@ -274,7 +274,9 @@ export function Step2({
           First, let&apos;s verify your email address.
         </Typography>
         <StepTrackShape />
-        <EmailVerification onVerificationSuccess={() => setIsEmailVerified(true)} />
+        <EmailVerificationComponent
+          onVerificationSuccess={() => setIsEmailVerified(true)}
+        />
       </Box>
     )
   }
