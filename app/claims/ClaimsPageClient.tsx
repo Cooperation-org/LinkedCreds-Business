@@ -267,7 +267,7 @@ const ClaimsPageClient: React.FC = () => {
       issueMonth: (issuanceDate.getMonth() + 1).toString(),
       expirationYear: expirationDate.getFullYear().toString(),
       expirationMonth: (expirationDate.getMonth() + 1).toString(),
-      certUrl: `https://linkedcreds.allskillscount.com/view/${claim.id.id}`
+      certUrl: `https://linked-creds-author-businees-enhancement.vercel.app/view/${claim.id.id}`
     })
     return `${baseLinkedInUrl}?${params.toString()}`
   }

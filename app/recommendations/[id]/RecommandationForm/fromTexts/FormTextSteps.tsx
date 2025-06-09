@@ -5,7 +5,7 @@ import { Box, Typography } from '@mui/material'
 
 export const textGuid = (fullName: string) => [
   <>
-    Hi, I’m Tessa! <br /> Where do you want to save your LinkedCreds?
+    Hi, I’m Tessa! <br /> Where do you want to save your LinkedCreds - Business?
   </>,
   <>
     First, choose where to save your recommendation.{' '}

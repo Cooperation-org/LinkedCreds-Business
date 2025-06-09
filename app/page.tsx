@@ -6,76 +6,92 @@ import Card from './components/cards'
 interface SectionProps {
   theme: Theme //NOSONAR
 }
-const EXAMPLE_CARDS = [
+// Four-card “fan” showcasing every credential type except identity-verification
+// Order them left-to-right by using slight rotations (−6°, −2°, +2°, +6°)
+
+export const EXAMPLE_CARDS = [
+  // ──────────────────────────────── Skill ────────────────────────────────
   {
-    id: 'caretaker',
+    id: 'skill',
     title: 'Elder Medical Carer',
     description:
-      'I am able to attend to the care of an older adult with complex medical needs. This includes day-to-day care as well as basic medical care.',
+      'Able to attend to older adults with complex medical needs, delivering both daily assistance and basic clinical care.',
     criteria: [
-      'Solo caretaker certification',
-      'Completed caretaker training program',
-      'Basic medical care instructions',
-      'Have CPR certification'
+      'Solo-caretaker certification',
+      'Completed 120-hr geriatric-care program',
+      'Medication-administration sign-off',
+      'Current CPR & First-Aid licence'
     ],
     duration: '5 Years',
     evidence: ['IMG_0630', 'IMG_0624', 'IMG_0640'],
-    width: '195px',
-    height: '385px',
-    rotation: 'rotate(-5deg)',
+    width: '200px',
+    height: '360px',
+    rotation: 'rotate(-6deg)',
     image: '/caretaker.jpeg',
     showPlayButton: false,
     showTimer: false
   },
+
+  // ──────────────────────── Performance-Review ───────────────────────────
   {
-    id: 'barista',
-    title: 'Barrista',
+    id: 'performance-review',
+    title: '2025 Performance Review',
     description:
-      'I am able to demonstrate advanced skills in coffee preparation, customer service, and knowledge of coffee origins and brewing techniques.',
+      'Summary of annual review covering job knowledge, teamwork, initiative, and communication.',
     criteria: [
-      'Took 12 hours of barista classes',
-      'Received positive customer surveys',
-      'Received positive teacher feedback'
+      'Job Knowledge — 4/5',
+      'Teamwork — 5/5',
+      'Initiative — 4/5',
+      'Communication — 4/5'
     ],
-    duration: '2 Days',
-    evidence: [
-      'Video of the Perfect Pour',
-      'Coffee Portfolio',
-      'Training Campus Certification',
-      'Scent training',
-      'IMG_0624',
-      'Tamping',
-      'IMG_0640'
-    ],
-    width: '195px',
-    height: '410px',
-    rotation: 'rotate(0deg)',
-    image: '/coffee.jpeg',
+    duration: 'Jan – Dec 2024',
+    evidence: ['Review_Form.pdf', 'Manager_Comments.txt'],
+    width: '200px',
+    height: '360px',
+    rotation: 'rotate(-2deg)',
+    image: '/performance.jpg',
     showPlayButton: true,
     showTimer: true
   },
+
+  // ──────────────────────────────── Role ────────────────────────────────
   {
-    id: 'landscaper',
-    title: 'Landscaper',
+    id: 'role',
+    title: 'Product Manager – FinTech Solutions',
     description:
-      'I am able to demonstrate advanced skills in landscaping, including hedge art, gardening, and outdoor hardscaping.',
+      'Responsible for roadmap planning, cross-functional coordination, and driving go-to-market success for digital-payments platform.',
     criteria: [
-      'Worked 3 years as landscaper',
-      'Received local landscaping award program',
-      'Received positive client reviews'
+      'Led three major feature launches',
+      'Managed $2 M annual budget',
+      'Supervised 8-person scrum team'
     ],
-    duration: '2 Weeks',
-    evidence: [
-      'Portfolio of Garden Care',
-      'Landscaper Portfolio',
-      'Hardscape Training',
-      'IMG_0624',
-      'IMG_0640'
+    duration: '2 Years',
+    evidence: ['OKR_Dashboard.png', 'Launch_Playbook.pdf'],
+    width: '200px',
+    height: '360px',
+    rotation: 'rotate(2deg)',
+    image: '/product-manager.webp',
+    showPlayButton: false,
+    showTimer: false
+  },
+
+  // ──────────────────────────── Volunteer ───────────────────────────────
+  {
+    id: 'volunteer',
+    title: 'Community Garden Volunteer',
+    description:
+      'Organised weekly sessions to cultivate organic produce and deliver it to local shelters.',
+    criteria: [
+      'Planned 25 community events',
+      'Taught 60+ residents sustainable gardening',
+      'Logged 300 volunteer hours'
     ],
-    width: '195px',
-    height: '400px',
-    rotation: 'rotate(5deg)',
-    image: '/landscape.jpeg',
+    duration: '18 Months',
+    evidence: ['Garden_Presentation.pptx', 'IMG_0720'],
+    width: '200px',
+    height: '360px',
+    rotation: 'rotate(6deg)',
+    image: '/volunteer.jpg',
     showPlayButton: true,
     showTimer: true
   }
@@ -131,7 +147,8 @@ const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCard
         maxWidth: '1400px',
         px: { xs: 2, md: 'auto' },
         pb: 4,
-        pt: { xs: '43px', md: '75px' }
+        pt: { xs: '43px', md: '75px' },
+        mb: { xs: 0, md: '100px' }
       }}
     >
       <Box
@@ -159,12 +176,12 @@ const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCard
           }}
         >
           {isMobile ? (
-            'Showcase the skills that define you.'
+            'Showcase LERs designed for your business'
           ) : (
             <>
-              Showcase the skills
+              Showcase LERs designed
               <br />
-              that define you.
+              for your business
             </>
           )}
         </Typography>
@@ -179,14 +196,17 @@ const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCard
           }}
         >
           {isMobile ? (
-            'Whether it’s caring for your family, volunteering, a side hustle, or on-the-job learning, LinkedCreds helps you document, verify, and share your unique experiences.'
+            'Whether enabling collaborative Performance Reviews, creating digital Employment Credentials for employees, recognizing staff Volunteerism or documenting employee skills that supervisors can endorse, LinkedCreds for Business gives you the tools to issue verifiable credentials you can use.'
           ) : (
             <>
-              Whether it&apos;s caring for your family, volunteering, a side hustle,
+              Whether enabling collaborative Performance Reviews, creating digital
+              Employment Credentials for employees,
               <br />
-              or on-the-job learning, LinkedCreds helps you document, verify,
+              recognizing staff Volunteerism or documenting employee skills that
+              supervisors can endorse,
               <br />
-              and share your unique experiences.
+              LinkedCreds for Business gives you the tools to issue verifiable credentials
+              you can use.
             </>
           )}
         </Typography>
@@ -197,8 +217,7 @@ const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCard
             sx={{
               backgroundColor: theme.palette.t3ButtonBlue,
               color: '#FFFFFF',
-              width: { xs: '195px', md: '177px' },
-              maxWidth: { xs: '195px', md: '177px' },
+              width: '220px',
               maxHeight: { xs: '40px', md: '52px' },
               borderRadius: '100px',
               py: '22px',
@@ -211,7 +230,7 @@ const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCard
               mb: { xs: '19px', md: 0 }
             }}
           >
-            Build your first skill
+            Build your credential
           </Button>
         </Link>
       </Box>
@@ -254,7 +273,7 @@ const MobileLinkedCredsSection: React.FC<SectionProps> = ({ theme }) => (
         fontWeight: '700'
       }}
     >
-      What are LinkedCreds?
+      What are LinkedCreds - Business?
     </Typography>
     <Box
       sx={{
