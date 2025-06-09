@@ -197,8 +197,8 @@ const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCard
             sx={{
               backgroundColor: theme.palette.t3ButtonBlue,
               color: '#FFFFFF',
-              width: { xs: '195px', md: '177px' },
-              maxWidth: { xs: '195px', md: '177px' },
+              width: '220px',
+              maxWidth: '220px',
               maxHeight: { xs: '40px', md: '52px' },
               borderRadius: '100px',
               py: '22px',
@@ -211,7 +211,7 @@ const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCard
               mb: { xs: '19px', md: 0 }
             }}
           >
-            Build your first skill
+            Build your first credential
           </Button>
         </Link>
       </Box>
