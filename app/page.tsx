@@ -100,24 +100,24 @@ export const EXAMPLE_CARDS = [
 const STEPS = [
   {
     id: 'capture',
-    title: '1. Capture your skills',
+    title: '1. Describe your employees contributions',
     icon: '/Document.svg',
     description:
-      'Add your experiences, from school activities, caregiving, volunteering, to special projects and more.'
+      'Add your employees’ skills and experiences, from volunteering, special projects, or employee job performance advancing your business.'
   },
   {
     id: 'validate',
     title: '2. Add validation',
     icon: '/Human Insurance.svg',
     description:
-      'Upload proof of your skills and request recommendations from trusted connections.'
+      'Upload proof supporting your credentials and request recommendations from employee supervisors and others.'
   },
   {
     id: 'share',
     title: '3. Share',
     icon: '/Network.svg',
     description:
-      'Share your skills with employers, add them to your resume, or to your LinkedIn profile.'
+      'Share employee skills with supervisors, add them to personnel records, or upload them to LinkedIn.'
   }
 ]
 
