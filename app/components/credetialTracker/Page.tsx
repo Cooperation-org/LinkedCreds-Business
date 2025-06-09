@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import {
-  Box,
-  Typography,
-  Paper,
-  styled,
-  Card,
-  CardContent,
-  Divider,
-  useStepContext
-} from '@mui/material'
+import { Box, Typography, Paper, styled, Card, CardContent } from '@mui/material'
 import { usePathname } from 'next/navigation'
 import { Logo, SVGBadgeCheck } from '../../Assets/SVGs'
 import Image from 'next/image'
@@ -195,6 +186,13 @@ const CredentialTracker: React.FC<TrackerProps> = ({
   activeStep
 }) => {
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
+  const credentialTypeMap: Record<string, string> = {
+    skill: 'Skill',
+    'performance-review': 'Performance Review',
+    role: 'Employment Role',
+    volunteer: 'Volunteer Experience',
+    'identity-verification': 'Notarized Identity Verification'
+  }
   // console.log(': activeStep', activeStep)
   const conf = cfg[segment] || cfg.skill
   const [timeAgo, setTimeAgo] = useState('just now')
@@ -558,7 +556,8 @@ const CredentialTracker: React.FC<TrackerProps> = ({
                     color: '#202e5b'
                   }}
                 >
-                  Here&apos;s what you&apos;re building
+                  Here&apos;s what you&apos;re building:{' '}
+                  {credentialTypeMap[segment] ?? 'Credential'}
                 </Typography>
                 <Typography
                   sx={{
