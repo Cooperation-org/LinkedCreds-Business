@@ -9,7 +9,7 @@ interface SectionProps {
 // Four-card “fan” showcasing every credential type except identity-verification
 // Order them left-to-right by using slight rotations (−6°, −2°, +2°, +6°)
 
-export const EXAMPLE_CARDS = [
+const EXAMPLE_CARDS = [
   // ──────────────────────────────── Skill ────────────────────────────────
   {
     id: 'skill',
