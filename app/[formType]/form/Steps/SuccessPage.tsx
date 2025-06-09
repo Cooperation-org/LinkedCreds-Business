@@ -104,7 +104,7 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
       issueMonth: '8',
       expirationYear: '2025',
       expirationMonth: '8',
-      certUrl: `https://linkedcreds.allskillscount.org/view/${fileId}`
+      certUrl: `https://linked-creds-author-businees-enhancement.vercel.app/view/${fileId}`
     })
     return `${baseLinkedInUrl}?${params.toString()}`
   }
@@ -112,7 +112,7 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
   const handleShareOption = (
     option: 'LinkedIn' | 'Email' | 'CopyURL' | 'View' | 'LinkedTrust'
   ) => {
-    const credentialLink = `https://linkedcreds.allskillscount.org/view/${fileId}`
+    const credentialLink = `https://linked-creds-author-businees-enhancement.vercel.app/view/${fileId}`
     // const credentialData = res
 
     if (option === 'LinkedIn') {

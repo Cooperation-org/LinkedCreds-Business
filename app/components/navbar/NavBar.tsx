@@ -62,15 +62,15 @@ const NavBar = () => {
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
-          pl: { xs: '15px', md: '9.6vw' }
+          pl: { xs: '15px', md: '3.6vw' }
         }}
       >
-        <Link href='/' aria-label='LinkedCreds Home'>
+        <Link href='/' aria-label='LinkedCreds - Business Home'>
           <Box sx={{ display: 'flex', alignItems: 'center', marginRight: '0px' }}>
             <Logo />
           </Box>
         </Link>
-        <Link href='/' aria-label='LinkedCreds Home'>
+        <Link href='/' aria-label='LinkedCreds - Business Home'>
           <Typography
             sx={{
               fontWeight: '700',
@@ -79,11 +79,11 @@ const NavBar = () => {
               fontFamily: 'inter'
             }}
           >
-            LinkedCreds
+            LinkedCreds - Business
           </Typography>
         </Link>
       </Box>
-      <Box sx={{ width: '100%' }}></Box>
+      <Box sx={{ width: { xs: '15px', md: '0vw' } }}></Box>
 
       {/* Navigation Links and Sign Button */}
       <Box
@@ -92,7 +92,7 @@ const NavBar = () => {
           display: { xs: 'none', md: 'flex' },
           alignItems: 'center',
           justifyContent: session ? 'space-between' : 'flex-end',
-          mr: { xs: '15px', md: '10.938vw' },
+          mr: { xs: '15px', md: '3.6vw' },
           gap: '3.9vw',
           textWrap: 'nowrap'
         }}
@@ -228,7 +228,7 @@ const NavBar = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  About LinkedCreds
+                  About LinkedCreds - Business
                 </Typography>
                 {isActive('/about') && (
                   <Box sx={{ height: '2px', width: '100%', mt: '5px', backgroundColor: '#003FE0' }} />

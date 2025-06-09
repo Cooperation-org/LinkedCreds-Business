@@ -46,9 +46,13 @@ const PrivacyPolicy = () => {
     <main className='privacy-policy-container'>
       <div className='privacy-policy-box'>
         <header className='privacy-policy-header'>
-          <a href='/' aria-label='LinkedCreds Home' className='privacy-policy-link'>
+          <a
+            href='/'
+            aria-label='LinkedCreds - Business Home'
+            className='privacy-policy-link'
+          >
             <Logo />
-            <span className='privacy-policy-logo-text'>LinkedCreds</span>
+            <span className='privacy-policy-logo-text'>LinkedCreds - Business</span>
           </a>
         </header>
 
@@ -56,7 +60,7 @@ const PrivacyPolicy = () => {
           <h1 className='privacy-policy-heading'>Privacy Policy</h1>
 
           <p className='privacy-policy-paragraph'>
-            LinkedCreds is an open-source web application developed by the{' '}
+            LinkedCreds - Business is an open-source web application developed by the{' '}
             <a
               href='https://www.t3networkhub.org/'
               target='_blank'

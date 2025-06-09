@@ -18,30 +18,31 @@ const AccessibilityPolicy = () => {
       }}
     >
       <Typography variant='h4' sx={{ fontWeight: 700, mb: 2 }}>
-        LinkedCreds Accessibility Policy
+        LinkedCreds - Business Accessibility Policy
       </Typography>
 
       <Typography sx={{ fontWeight: 600 }}>Purpose</Typography>
       <Typography sx={{ fontSize: '16px', lineHeight: '1.6' }}>
-        At LinkedCreds, we are committed to providing an inclusive and accessible platform
-        for all users, including individuals with disabilities. Our goal is to ensure that
-        everyone can fully participate in and benefit from our services, which include
-        creating and sharing verifiable claims for skills, credentials, and experiences.
+        At LinkedCreds - Business, we are committed to providing an inclusive and
+        accessible platform for all users, including individuals with disabilities. Our
+        goal is to ensure that everyone can fully participate in and benefit from our
+        services, which include creating and sharing verifiable claims for skills,
+        credentials, and experiences.
       </Typography>
 
       <Typography sx={{ fontWeight: 600 }}>Scope</Typography>
       <Typography sx={{ fontSize: '16px', lineHeight: '1.6' }}>
         This policy applies to all digital services and platforms associated with
-        LinkedCreds, including our web-based applications and mobile interfaces. We are
-        dedicated to meeting accessibility standards to provide an equitable experience
-        for all users.
+        LinkedCreds - Business, including our web-based applications and mobile
+        interfaces. We are dedicated to meeting accessibility standards to provide an
+        equitable experience for all users.
       </Typography>
 
       <Typography sx={{ fontWeight: 600 }}>Accessibility Standards</Typography>
       <Typography sx={{ fontSize: '16px', lineHeight: '1.6' }}>
-        LinkedCreds adheres to the Web Content Accessibility Guidelines (WCAG) 2.1, Level
-        AA, to ensure our platform is usable by as many people as possible. We recognize
-        that accessibility is an ongoing process and are committed to improving
+        LinkedCreds - Business adheres to the Web Content Accessibility Guidelines (WCAG)
+        2.1, Level AA, to ensure our platform is usable by as many people as possible. We
+        recognize that accessibility is an ongoing process and are committed to improving
         accessibility continuously.
       </Typography>
 
@@ -63,9 +64,10 @@ const AccessibilityPolicy = () => {
 
       <Typography sx={{ fontWeight: 600 }}>Testing and Auditing</Typography>
       <Typography sx={{ fontSize: '16px', lineHeight: '1.6' }}>
-        LinkedCreds conducts regular testing and auditing of its digital services to
-        identify and resolve accessibility issues. We use automated testing tools as well
-        as manual reviews to maintain compliance with accessibility standards.
+        LinkedCreds - Business conducts regular testing and auditing of its digital
+        services to identify and resolve accessibility issues. We use automated testing
+        tools as well as manual reviews to maintain compliance with accessibility
+        standards.
       </Typography>
 
       <Typography sx={{ fontWeight: 600 }}>User Feedback</Typography>

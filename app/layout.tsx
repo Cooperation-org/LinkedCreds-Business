@@ -6,19 +6,19 @@ import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
-  title: 'LinkedCreds',
+  title: 'LinkedCreds - Business',
   description:
-    'LinkedCreds offers the ultimate solution for managing your professional credentials. Capture, store, and share your achievements securely to unlock new opportunities.',
+    'LinkedCreds - Business offers the ultimate solution for managing your professional credentials. Capture, store, and share your achievements securely to unlock new opportunities.',
   keywords:
-    'Credential Management, Professional Credentials, Secure Storage, Share Achievements, LinkedCreds',
+    'Credential Management, Professional Credentials, Secure Storage, Share Achievements, LinkedCreds, Business',
   authors: [{ name: 'Linked Trust' }],
-  metadataBase: new URL('https://linkedcreds.allskillscount.org'),
+  metadataBase: new URL('https://linked-creds-author-businees-enhancement.vercel.app/'),
   openGraph: {
-    title: 'LinkedCreds',
+    title: 'LinkedCreds - Business',
     description:
-      'Manage your professional credentials securely and efficiently with LinkedCreds. Capture, store, and share your achievements to unlock new opportunities.',
-    url: 'https://linkedcreds.allskillscount.org',
-    siteName: 'LinkedCreds',
+      'Manage your professional credentials securely and efficiently with LinkedCreds - Business. Capture, store, and share your achievements to unlock new opportunities.',
+    url: 'https://linked-creds-author-businees-enhancement.vercel.app/',
+    siteName: 'LinkedCreds - Business',
     images: [
       {
         url: '/images/og-image.png',
@@ -30,12 +30,12 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'LinkedCreds',
+    title: 'LinkedCreds - Business',
     description:
-      'Securely manage and share your professional credentials with LinkedCreds. Enhance your career opportunities with our comprehensive credential management solution.',
+      'Securely manage and share your professional credentials with LinkedCreds - Business. Enhance your career opportunities with our comprehensive credential management solution.',
     images: ['/images/og-image.png']
   },
-  applicationName: 'LinkedCreds',
+  applicationName: 'LinkedCreds-Business',
   formatDetection: {
     telephone: false
   },
@@ -50,12 +50,12 @@ export const metadata: Metadata = {
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'LinkedCreds',
-  url: 'https://linkedcreds.allskillscount.org',
+  name: 'LinkedCreds - Business',
+  url: 'https://linked-creds-author-businees-enhancement.vercel.app/',
   applicationCategory: 'CredentialManagement',
   operatingSystem: 'Web-based',
   description:
-    'LinkedCreds is a secure and efficient credential management platform. Easily capture, store, and share your professional credentials to unlock new opportunities.',
+    'LinkedCreds - Business is a secure and efficient credential management platform. Easily capture, store, and share your professional credentials to unlock new opportunities.',
   featureList: [
     'Credential Capture',
     'Secure Storage',
@@ -69,9 +69,9 @@ const structuredData = {
   ],
   publisher: {
     '@type': 'Organization',
-    name: 'LinkedCreds',
-    url: 'https://linkedcreds.allskillscount.org',
-    logo: 'https://linkedcreds.allskillscount.org/images/logo.png'
+    name: 'LinkedCreds - Business',
+    url: 'https://linked-creds-author-businees-enhancement.vercel.app/',
+    logo: 'https://linked-creds-author-businees-enhancement.vercel.app/images/logo.png'
   },
   applicationSubCategory: 'Credential Management'
 }

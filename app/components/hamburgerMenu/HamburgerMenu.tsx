@@ -8,10 +8,10 @@ import { Logo } from '../../Assets/SVGs/index'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 
 const features = [
-  { id: 1, name: 'Capture any skill or experience' },
-  { id: 2, name: 'Add portfolio pieces and evidence' },
-  { id: 3, name: 'Request references from others' },
-  { id: 4, name: 'Share with employers & on LinkedIn' }
+  { id: 1, name: 'Describe employee contributions' },
+  { id: 2, name: 'Upload supporting evidence' },
+  { id: 3, name: 'Request supervisor endorsements' },
+  { id: 4, name: 'Share with supervisors & LinkedIn' }
 ]
 
 const HamburgerMenu = () => {
@@ -37,7 +37,7 @@ const HamburgerMenu = () => {
       <Drawer anchor='left' open={isOpen} onClose={toggleDrawer}>
         <Box
           sx={{
-            width: '300px',
+            width: '320px',
             padding: '20px',
             display: 'flex',
             flexDirection: 'column',
@@ -68,7 +68,7 @@ const HamburgerMenu = () => {
                     color: '#000'
                   }}
                 >
-                  LinkedCreds
+                  LinkedCreds - Business
                 </Typography>
               </Box>
             </Link>
@@ -284,10 +284,10 @@ const HamburgerMenu = () => {
               <>
                 {/* Login description and features */}
                 <Typography variant='h6' sx={{ fontWeight: 400, fontSize: '16px' }}>
-                  Login to access your LinkedCreds
+                  Login to access your LinkedCreds - Business
                 </Typography>
                 <Typography sx={{ fontSize: '13px', fontWeight: 400 }}>
-                  With LinkedCreds, you can:
+                  With LinkedCreds - Business, you can:
                 </Typography>
                 {features.map(feature => (
                   <Box key={feature.id} sx={{ display: 'flex', alignItems: 'center' }}>
@@ -339,7 +339,7 @@ const HamburgerMenu = () => {
                 }}
               >
                 <Typography sx={{ fontWeight: 400, fontSize: '16px', height: '22px' }}>
-                  About LinkedCreds
+                  About LinkedCreds - Business
                 </Typography>
                 <ArrowForwardIosIcon fontSize='small' />
               </Box>
