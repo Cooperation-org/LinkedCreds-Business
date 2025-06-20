@@ -90,10 +90,12 @@ export const StepProvider = ({ children }: { children: React.ReactNode }) => {
   const handleNext = useCallback(async () => {
     const pathname = window.location.pathname
     const isRecommendationForm = pathname.includes('/recommendations/')
-    const isCredentialForm = pathname.includes('/credentialForm')
+    const isperformanceReview = pathname.includes('/performance-review')
 
     const shouldTriggerUpload =
-      (isCredentialForm && activeStep === 3) || (isRecommendationForm && activeStep === 2)
+      (isRecommendationForm && activeStep === 2) ||
+      (!isRecommendationForm && activeStep === 3) ||
+      (isperformanceReview && activeStep === 4)
 
     if (shouldTriggerUpload && uploadImageFnRef.current) {
       setLoading(true)
