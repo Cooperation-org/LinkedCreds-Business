@@ -160,7 +160,7 @@ const tearDown = async (storage: any, claim: any) => {
   if (folderId != null) {
     try {
       const kids = await storage.findFilesUnderFolder(folderId)
-      const r = kids.find((f: any) => f.name === 'RELATIONS')
+      const r = kids.find((f: any) => f?.name === 'RELATIONS')
       relationsId = r?.id ?? null
     } catch {}
   }
@@ -519,7 +519,7 @@ const ClaimsPageClient: React.FC = () => {
                         textDecoration: 'underline'
                       }}
                     >
-                      {claim.credentialSubject.achievement[0].name}
+                      {claim.credentialSubject.achievement[0]?.name}
                     </Typography>
                   </Box>
                 ) : (
@@ -534,7 +534,7 @@ const ClaimsPageClient: React.FC = () => {
                           fontSize: '1.25rem'
                         }}
                       >
-                        {claim.credentialSubject.achievement[0].name} -
+                        {claim.credentialSubject.achievement[0]?.name} -
                       </Typography>
                       <Typography
                         sx={{
@@ -547,7 +547,7 @@ const ClaimsPageClient: React.FC = () => {
                       </Typography>
                     </Box>
                     <Typography sx={{ color: 'text.secondary' }}>
-                      {claim.credentialSubject.name} -{' '}
+                      {claim.credentialSubject?.name} -{' '}
                       {getTimeDifference(claim.issuanceDate)}
                     </Typography>
                   </Box>
