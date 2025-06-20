@@ -88,12 +88,26 @@ export const StepProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeStep, excludedPaths])
 
   const handleNext = useCallback(async () => {
-    if (uploadImageFnRef.current) {
-      const uploadFnExecutor = uploadImageFnRef.current(setLoading)
-      await uploadFnExecutor()
+    const pathname = window.location.pathname
+    const isRecommendationForm = pathname.includes('/recommendations/')
+    const isCredentialForm = pathname.includes('/credentialForm')
+
+    const shouldTriggerUpload =
+      (isCredentialForm && activeStep === 3) || (isRecommendationForm && activeStep === 2)
+
+    if (shouldTriggerUpload && uploadImageFnRef.current) {
+      setLoading(true)
+      try {
+        const uploadFnExecutor = uploadImageFnRef.current(setLoading)
+        await uploadFnExecutor()
+      } catch (error) {
+        console.error('Error during image upload:', error)
+      } finally {
+        setLoading(false)
+      }
     }
     setActiveStep(prev => prev + 1)
-  }, [])
+  }, [activeStep])
 
   const handleBack = useCallback(() => {
     setActiveStep(prev => (prev > 0 ? prev - 1 : 0))
