@@ -17,7 +17,6 @@ import { GoogleDriveStorage, saveToGoogleDrive } from '@cooperation/vc-storage'
 import { createDID } from '../../../utils/signCred'
 import { signCred } from '../../../utils/credential'
 import { useSession } from 'next-auth/react'
-import ComprehensiveClaimDetails from '../../../view/[id]/ComprehensiveClaimDetails'
 import { Logo } from '../../../Assets/SVGs'
 import useGoogleDrive from '../../../hooks/useGoogleDrive'
 import { storeFileTokens } from '../../../firebase/storage'
@@ -264,7 +263,6 @@ const Form: React.FC<FormProps> = ({ fullName, email }) => {
             </Box>
           </Box>
         )}
-        {activeStep === 0 && <ComprehensiveClaimDetails />}
 
         <Box sx={{ width: '100%' }}>
           <FormControl sx={{ width: '100%' }}>
