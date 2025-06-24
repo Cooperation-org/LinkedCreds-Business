@@ -94,6 +94,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
   const accessToken = session?.accessToken
   const isAskForRecommendation = pathname?.includes('/askforrecommendation')
   const isView = pathname?.includes('/view')
+  const isRecommendationsPage = pathname?.includes('/recommendations')
   const {} = useGoogleDrive()
   const [expandedComments, setExpandedComments] = useState<{ [key: string]: boolean }>({})
 
@@ -327,13 +328,28 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
               <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                 <SVGBadge />
                 <Typography
-                  sx={{ color: 't3BodyText', fontSize: '24px', fontWeight: 700 }}
+                  sx={{
+                    color: 't3BodyText',
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-line',
+                    overflowWrap: 'anywhere'
+                  }}
                 >
                   {credentialSubject?.name} has claimed:
                 </Typography>
               </Box>
               <Typography
-                sx={{ color: 't3BodyText', fontSize: '24px', fontWeight: 700, mt: 2 }}
+                sx={{
+                  color: 't3BodyText',
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  mt: 2,
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-line',
+                  overflowWrap: 'anywhere'
+                }}
               >
                 {achievement?.name ?? 'Unnamed Achievement'}
               </Typography>
@@ -355,7 +371,15 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                 <Box sx={{ mt: '2px' }}>
                   <SVGDate />
                 </Box>
-                <Typography sx={{ color: 't3BodyText', fontSize: '13px' }}>
+                <Typography
+                  sx={{
+                    color: 't3BodyText',
+                    fontSize: '13px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-line',
+                    overflowWrap: 'anywhere'
+                  }}
+                >
                   {credentialSubject?.duration}
                 </Typography>
               </Box>
@@ -366,10 +390,12 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                   <Box
                     sx={{
                       display: 'flex',
-                      flexDirection: isLargeScreen ? 'row' : 'column',
+                      flexDirection: 'column',
+                      alignItems: 'center',
                       gap: '20px',
                       my: '10px',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      width: '100%'
                     }}
                   >
                     <EvidencePreview
@@ -388,7 +414,10 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                         fontSize: '17px',
                         letterSpacing: '0.075px',
                         lineHeight: '24px',
-                        mt: 2
+                        mt: 2,
+                        wordBreak: 'break-word',
+                        whiteSpace: 'pre-line',
+                        overflowWrap: 'anywhere'
                       }}
                     >
                       <span
@@ -402,50 +431,78 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                 {achievement?.criteria?.narrative && (
                   <Box sx={{ mt: 2 }}>
                     <Typography>What does that entail?:</Typography>
-                    <ul style={{ marginLeft: '25px' }}>
+                    <ul
+                      style={{
+                        marginLeft: '25px',
+                        wordBreak: 'break-word',
+                        whiteSpace: 'pre-line',
+                        overflowWrap: 'anywhere'
+                      }}
+                    >
                       <li>
                         <span
                           dangerouslySetInnerHTML={{
                             __html: cleanHTML(achievement?.criteria?.narrative)
+                          }}
+                          style={{
+                            wordBreak: 'break-word',
+                            whiteSpace: 'pre-line',
+                            overflowWrap: 'anywhere'
                           }}
                         />
                       </li>
                     </ul>
                   </Box>
                 )}
-                {hasValidEvidence && (
-                  <Box sx={{ mt: 3 }}>
-                    <Typography sx={{ fontWeight: 600 }}>
-                      Supporting Evidence / Portfolio:
-                    </Typography>
-                    <ul
-                      style={{
-                        marginLeft: '25px',
-                        textDecorationLine: 'underline',
-                        color: 'blue'
-                      }}
-                    >
-                      {credentialSubject?.portfolio?.map((portfolioItem, idx) => (
-                        <li
-                          key={`main-portfolio-${idx}`}
-                          style={{
-                            cursor: 'pointer',
-                            width: 'fit-content',
-                            marginBottom: '10px'
-                          }}
-                        >
-                          <Link
-                            href={portfolioItem.url}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                          >
-                            {portfolioItem.name}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </Box>
-                )}
+                {hasValidEvidence &&
+                  credentialSubject?.portfolio?.some(item => item.name && item.url) && (
+                    <Box sx={{ mt: 3 }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                          wordBreak: 'break-word',
+                          whiteSpace: 'pre-line',
+                          overflowWrap: 'anywhere'
+                        }}
+                      >
+                        Supporting Evidence / Portfolio:
+                      </Typography>
+                      <ul
+                        style={{
+                          marginLeft: '25px',
+                          textDecorationLine: 'underline',
+                          color: 'blue',
+                          wordBreak: 'break-word',
+                          whiteSpace: 'pre-line',
+                          overflowWrap: 'anywhere'
+                        }}
+                      >
+                        {credentialSubject?.portfolio
+                          ?.filter(item => item.name && item.url)
+                          .map((portfolioItem, idx) => (
+                            <li
+                              key={`main-portfolio-${idx}`}
+                              style={{
+                                cursor: 'pointer',
+                                width: 'fit-content',
+                                marginBottom: '10px',
+                                wordBreak: 'break-word',
+                                whiteSpace: 'pre-line',
+                                overflowWrap: 'anywhere'
+                              }}
+                            >
+                              <Link
+                                href={portfolioItem.url}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                              >
+                                {portfolioItem.name}
+                              </Link>
+                            </li>
+                          ))}
+                      </ul>
+                    </Box>
+                  )}
               </>
             )}
             {/* {pathname?.includes('/claims') && (
@@ -476,35 +533,44 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                 </Link>
               </Box>
             )} */}
-            {(pathname?.includes('/view') || !!propFileID) && claimDetail && (
-              <Box
-                sx={{ display: 'flex', flexDirection: 'column', gap: '4px', mt: '20px' }}
-              >
-                <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#000E40' }}>
-                  Credential Details
-                </Typography>
+            {(pathname?.includes('/view') || !!propFileID) &&
+              claimDetail &&
+              !isRecommendationsPage && (
                 <Box
-                  sx={{ display: 'flex', gap: '5px', mt: '10px', alignItems: 'center' }}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    mt: '20px'
+                  }}
                 >
-                  <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
-                    <CheckMarkSVG />
+                  <Typography
+                    sx={{ fontSize: '13px', fontWeight: 700, color: '#000E40' }}
+                  >
+                    Credential Details
+                  </Typography>
+                  <Box
+                    sx={{ display: 'flex', gap: '5px', mt: '10px', alignItems: 'center' }}
+                  >
+                    <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
+                      <CheckMarkSVG />
+                    </Box>
+                    <Typography>Has a valid digital signature</Typography>
                   </Box>
-                  <Typography>Has a valid digital signature</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                  <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
-                    <CheckMarkSVG />
+                  <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                    <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
+                      <CheckMarkSVG />
+                    </Box>
+                    <Typography>Has not expired</Typography>
                   </Box>
-                  <Typography>Has not expired</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                  <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
-                    <CheckMarkSVG />
+                  <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                    <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
+                      <CheckMarkSVG />
+                    </Box>
+                    <Typography>Has not been revoked by issuer</Typography>
                   </Box>
-                  <Typography>Has not been revoked by issuer</Typography>
                 </Box>
-              </Box>
-            )}
+              )}
           </Box>
         </Box>
       )}
@@ -576,7 +642,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
       )}
 
       {/* Comments Section */}
-      {(isView || !!propFileID) && claimDetail && (
+      {(isView || !!propFileID) && claimDetail && !isRecommendationsPage && (
         <Box>
           {loading ? (
             <Box display='flex' justifyContent='center' my={2}>

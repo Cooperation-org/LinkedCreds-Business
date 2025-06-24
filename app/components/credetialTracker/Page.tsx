@@ -41,7 +41,10 @@ const Value = styled(Typography)({
   fontSize: '16px',
   fontWeight: 400,
   lineHeight: '24px',
-  color: '#6b7280'
+  color: '#6b7280',
+  wordBreak: 'break-word',
+  whiteSpace: 'pre-line',
+  overflowWrap: 'anywhere'
 })
 const Media = styled(Box)({
   width: '160.506px',
