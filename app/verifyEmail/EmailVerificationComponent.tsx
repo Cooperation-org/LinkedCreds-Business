@@ -153,6 +153,22 @@ export const EmailVerificationComponent = ({
     sendVerificationCode()
   }
 
+  // Handle paste event for the code fields
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('Text').replace(/\D/g, '').slice(0, 6)
+    if (pasted.length === 0) return
+    const newCode = pasted.split('')
+    while (newCode.length < 6) newCode.push('')
+    setCode(newCode)
+    // Focus the last filled input
+    const lastFilled = Math.min(pasted.length - 1, 5)
+    inputRefs.current[lastFilled]?.focus()
+    if (newCode.every(digit => digit !== '')) {
+      setTimeout(() => verifyCode(newCode), 100)
+    }
+  }
+
   return (
     <Box
       sx={{
@@ -197,6 +213,7 @@ export const EmailVerificationComponent = ({
                 value={digit}
                 onChange={e => handleCodeChange(index, e.target.value)}
                 onKeyDown={e => handleKeyDown(index, e)}
+                onPaste={handlePaste}
                 inputProps={{
                   maxLength: 1,
                   style: {
