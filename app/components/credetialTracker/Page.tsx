@@ -185,9 +185,8 @@ const cfg: Record<string, CFG> = {
       { label: 'Volunteer Role', key: 'volunteerWork' },
       { label: 'Volunteer Organization', key: 'volunteerOrg' },
       { label: 'Volunteer Description', key: 'volunteerDescription', isHtml: true },
-      { label: 'Skills gained through volunteering', key: 'skillsGained', bullet: true },
-      { label: 'Duration', key: 'duration' },
-      { label: 'Volunteer Dates', key: 'volunteerDates' }
+      { label: 'Skills gained through volunteering', key: 'skillsGained', bullet: true }
+      // Duration/Dates field is handled by renderVolunteerDates() function
     ]
   },
   'identity-verification': {
@@ -251,6 +250,40 @@ const CredentialTracker: React.FC<TrackerProps> = ({
     setLastChange(Date.now())
     setTimeAgo('just now')
   }, [formData])
+
+  const renderVolunteerDates = () => {
+    if (segment !== 'volunteer') return null
+
+    let dateDisplay = 'To be completed...'
+    let label = 'Volunteer Dates'
+
+    // Check if showDuration is true or if duration field has content
+    if (formData?.showDuration || (formData?.duration && !formData?.volunteerDates)) {
+      if (formData?.duration) {
+        dateDisplay = formData.duration
+        label = 'Time Spent Volunteering'
+      }
+    } else if (formData?.volunteerDates) {
+      dateDisplay = formData.volunteerDates
+      label = 'Volunteer Dates'
+    }
+
+    // Don't render if no data
+    if (
+      dateDisplay === 'To be completed...' &&
+      !formData?.duration &&
+      !formData?.volunteerDates
+    ) {
+      return null
+    }
+
+    return (
+      <Box sx={{ mb: 2.5 }}>
+        <Label>{label}</Label>
+        <Value>{dateDisplay}</Value>
+      </Box>
+    )
+  }
 
   const renderReviewDates = () => {
     if (segment !== 'performance-review') return null
@@ -434,6 +467,10 @@ const CredentialTracker: React.FC<TrackerProps> = ({
           {formData?.employeeName || 'Employee Name'}
         </Typography>
 
+        <TextField label='Employee Job Title' value={formData?.employeeJobTitle} />
+        <TextField label='Company You Work For' value={formData?.company} />
+        <TextField label='Your Role (Reviewer)' value={formData?.role} />
+
         <TextField label='Review Comments' value={formData?.reviewComments} isHtml />
 
         {/* Overall Rating - Render only if value exists */}
@@ -542,6 +579,7 @@ const CredentialTracker: React.FC<TrackerProps> = ({
             />
           )
         })}
+        {renderVolunteerDates()}
         {renderMedia()}
         {renderSupportingDocs()}
       </Box>

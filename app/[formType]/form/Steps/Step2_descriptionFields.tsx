@@ -103,7 +103,7 @@ const formConfigs: Record<string, Config> = {
         multiline: true,
         rows: 11
       },
-      { name: 'timeSpent', label: 'Time spent volunteering' },
+      // { name: 'timeSpent', label: 'Time spent volunteering' }, // Removed - redundant with Volunteer Dates section
       {
         name: 'skillsGained',
         label: 'Skills gained through volunteering',
@@ -348,7 +348,7 @@ export function Step2({
                     {...register('duration')}
                     {...TextFieldStyles}
                     fullWidth
-                    placeholder='Ex. 2 years'
+                    placeholder='Time spent volunteering - Ex. 2 years'
                   />
                 ) : (
                   <TextField
@@ -390,16 +390,8 @@ export function Step2({
               sx={{ ml: 0 }}
             />
           </Box>
-          {config.fields.slice(3, 4).map(f => (
-            <Box key={f.name} sx={{ width: '100%' }}>
-              <FormLabel sx={formLabelStyles}>
-                {f.label}
-                {f.required && ' (required)'}
-              </FormLabel>
-              {renderInputField(f)}
-            </Box>
-          ))}
-          {config.fields.slice(4).map(f => (
+          {/* Removed timeSpent field - it was redundant with Volunteer Dates section above */}
+          {config.fields.slice(3).map(f => (
             <Box key={f.name} sx={{ width: '100%' }}>
               <FormLabel sx={formLabelStyles}>
                 {f.label}

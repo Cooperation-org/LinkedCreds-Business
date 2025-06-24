@@ -69,7 +69,22 @@ export interface FormData {
   teamworkRating?: string
   initiativeRating?: string
   communicationRating?: string
-  [key: string]: string | number | boolean | Portfolio[] | undefined
+  // Volunteer specific fields
+  skillsGained?: string | string[] // Can be string during input, array after processing
+  volunteerWork?: string
+  volunteerOrg?: string
+  volunteerDescription?: string
+  volunteerDates?: string
+  duration?: string
+  timeSpent?: string
+  showDuration?: boolean
+  currentVolunteer?: boolean
+  // Employment specific fields
+  role?: string
+  company?: string
+  employeeName?: string
+  employeeJobTitle?: string
+  [key: string]: string | number | boolean | Portfolio[] | string[] | undefined
 }
 
 // Component Props for the form
