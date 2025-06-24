@@ -111,7 +111,22 @@ export const EmailVerificationComponent = ({
   }
 
   const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) return
+    if (value.length > 1) {
+      const pasted = value.split('').slice(0, 6)
+      const newCode = [...code]
+      for (let i = 0; i < pasted.length; i++) {
+        if (index + i < 6) {
+          newCode[index + i] = pasted[i]
+        }
+      }
+      setCode(newCode)
+      const lastFilled = Math.min(index + pasted.length - 1, 5)
+      inputRefs.current[lastFilled]?.focus()
+      if (newCode.every(digit => digit !== '')) {
+        setTimeout(() => verifyCode(newCode), 100)
+      }
+      return
+    }
 
     const newCode = [...code]
     newCode[index] = value
