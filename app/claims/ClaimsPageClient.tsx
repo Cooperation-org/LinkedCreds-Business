@@ -516,7 +516,15 @@ const ClaimsPageClient: React.FC = () => {
                       variant='subtitle1'
                       sx={{
                         fontWeight: 600,
-                        textDecoration: 'underline'
+                        textDecoration: 'underline',
+                        cursor: 'pointer'
+                      }}
+                      onClick={e => {
+                        e.stopPropagation()
+                        window.open(
+                          `${window.location.origin}/view/${claim.id.id}`,
+                          '_blank'
+                        )
                       }}
                     >
                       {claim.credentialSubject.achievement[0]?.name}
@@ -531,10 +539,19 @@ const ClaimsPageClient: React.FC = () => {
                       <Typography
                         sx={{
                           fontWeight: 'bold',
-                          fontSize: '1.25rem'
+                          fontSize: '1.25rem',
+                          textDecoration: 'underline',
+                          cursor: 'pointer'
+                        }}
+                        onClick={e => {
+                          e.stopPropagation()
+                          window.open(
+                            `${window.location.origin}/view/${claim.id.id}`,
+                            '_blank'
+                          )
                         }}
                       >
-                        {claim.credentialSubject.achievement[0]?.name} -
+                        {claim.credentialSubject.achievement[0]?.name}
                       </Typography>
                       <Typography
                         sx={{
