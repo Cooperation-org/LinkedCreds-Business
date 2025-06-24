@@ -70,13 +70,12 @@ export interface FormData {
   initiativeRating?: string
   communicationRating?: string
   // Volunteer specific fields
-  skillsGained?: string | string[] // Can be string during input, array after processing
+  skillsGained?: string // String during form input and VC signing, converted to array by VC library in final credential
   volunteerWork?: string
   volunteerOrg?: string
   volunteerDescription?: string
   volunteerDates?: string
   duration?: string
-  timeSpent?: string
   showDuration?: boolean
   currentVolunteer?: boolean
   // Employment specific fields

@@ -78,7 +78,6 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
           volunteerOrg: '',
           volunteerDescription: '',
           duration: '',
-          timeSpent: '',
           skillsGained: '',
           volunteerDates: '',
           showDuration: false,
@@ -211,16 +210,14 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
         data.volunteerDates =
           String(data.volunteerDates) + (data.currentVolunteer ? ' -present' : '')
       }
+
+      // Remove UI-specific fields that shouldn't be in the credential
       delete data.showDuration
       delete data.currentVolunteer
+      delete data.timeSpent // Unused field - we use duration/volunteerDates instead
 
-      // Convert skillsGained from string to array
-      if (data.skillsGained && typeof data.skillsGained === 'string') {
-        ;(data as any).skillsGained = (data.skillsGained as string)
-          .split(/\n|,|•/)
-          .map((skill: string) => skill.trim())
-          .filter((skill: string) => skill.length > 0)
-      }
+      // Keep skillsGained as string for VC library - it expects to call .split() on it
+      // Array conversion happens only in display components
     }
 
     if (formType === 'volunteer' && data.volunteerWork) {
