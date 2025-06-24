@@ -274,6 +274,7 @@ export const Step3_performanceReviewFields: React.FC<
 
       <TextField
         label='Review Comments / Key Achievements'
+        placeholder='Enter review comments and key achievements...'
         variant='outlined'
         fullWidth
         multiline
@@ -285,6 +286,7 @@ export const Step3_performanceReviewFields: React.FC<
 
       <TextField
         label='Goals for Next Period / Areas for Development'
+        placeholder='Enter goals and areas for development...'
         variant='outlined'
         fullWidth
         multiline

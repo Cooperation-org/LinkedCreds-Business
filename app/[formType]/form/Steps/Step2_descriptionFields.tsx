@@ -62,13 +62,13 @@ const formConfigs: Record<string, Config> = {
     fields: [
       {
         name: 'credentialName',
-        label: 'Skill Name (required):',
+        label: 'Skill Name',
         required: true,
         autoComplete: true
       },
       {
         name: 'credentialDescription',
-        label: 'Skill Description (required):',
+        label: 'Skill Description',
         required: true,
         multiline: true,
         rows: 11,
@@ -76,13 +76,13 @@ const formConfigs: Record<string, Config> = {
       },
       {
         name: 'description',
-        label: 'Describe how you earned this skill (required):',
+        label: 'How you earned this skill',
         required: true,
         multiline: true,
         rows: 11,
         max: CHAR_LIMIT
       },
-      { name: 'credentialDuration', label: 'Time spent acquiring this skill:' }
+      { name: 'credentialDuration', label: 'Time spent acquiring this skill' }
     ]
   },
   volunteer: {
@@ -90,23 +90,23 @@ const formConfigs: Record<string, Config> = {
     description:
       'Now take a moment to describe the volunteer experience you want to document.',
     fields: [
-      { name: 'volunteerWork', label: 'Volunteer Role (required):', required: true },
+      { name: 'volunteerWork', label: 'Volunteer Role', required: true },
       {
         name: 'volunteerOrg',
-        label: 'Volunteer Organization (required):',
+        label: 'Volunteer Organization',
         required: true
       },
       {
         name: 'volunteerDescription',
-        label: 'Volunteer Description (required):',
+        label: 'Volunteer Description',
         required: true,
         multiline: true,
         rows: 11
       },
-      { name: 'timeSpent', label: 'Time spent volunteering:' },
+      { name: 'timeSpent', label: 'Time spent volunteering' },
       {
         name: 'skillsGained',
-        label: 'Skills gained through volunteering (required):',
+        label: 'Skills gained through volunteering',
         required: true,
         multiline: true,
         rows: 11
@@ -117,20 +117,20 @@ const formConfigs: Record<string, Config> = {
     title: 'Step 2',
     description: 'Provide some information about your position.',
     fields: [
-      { name: 'role', label: 'Your Role (required):', required: true },
-      { name: 'company', label: 'Company you work for (required):', required: true }
+      { name: 'role', label: 'Your Role', required: true },
+      { name: 'company', label: 'Company you work for', required: true }
     ]
   },
   'performance-review': {
     title: 'Step 2',
     description: "Provide some information about the employee you're reviewing.",
     fields: [
-      { name: 'company', label: 'Company you work for (required):', required: true },
-      { name: 'role', label: 'Your Role (required):', required: true },
-      { name: 'employeeName', label: 'Name of Employee (required):', required: true },
+      { name: 'company', label: 'Company you work for', required: true },
+      { name: 'role', label: 'Your Role', required: true },
+      { name: 'employeeName', label: 'Name of Employee', required: true },
       {
         name: 'employeeJobTitle',
-        label: 'Employee job title (required):',
+        label: 'Employee job title',
         required: true
       }
     ]
@@ -139,10 +139,10 @@ const formConfigs: Record<string, Config> = {
     title: 'Step 2',
     description: 'Provide the basic details from the ID you want to verify.',
     fields: [
-      { name: 'documentType', label: 'Document Type (required):', required: true },
-      { name: 'documentNumber', label: 'Document Number (required):', required: true },
-      { name: 'issuingCountry', label: 'Issuing Country (required):', required: true },
-      { name: 'expirationDate', label: 'Expiration Date:' }
+      { name: 'documentType', label: 'Document Type', required: true },
+      { name: 'documentNumber', label: 'Document Number', required: true },
+      { name: 'issuingCountry', label: 'Issuing Country', required: true },
+      { name: 'expirationDate', label: 'Expiration Date' }
     ]
   }
 }
@@ -176,7 +176,7 @@ export function Step2({
           key={field.name}
           name={field.name}
           control={control}
-          rules={field.required ? { required: field.label.replace(':', '') } : {}}
+          rules={field.required ? { required: `${field.label} is required` } : {}}
           render={({ field: ctl, fieldState: { error } }) => (
             <Autocomplete
               freeSolo
@@ -217,7 +217,7 @@ export function Step2({
           key={field.name}
           {...register(
             field.name,
-            field.required ? { required: field.label.replace(':', '') } : {}
+            field.required ? { required: `${field.label} is required` } : {}
           )}
           sx={customTextFieldStyles}
           multiline
@@ -238,7 +238,7 @@ export function Step2({
         key={field.name}
         {...register(
           field.name,
-          field.required ? { required: field.label.replace(':', '') } : {}
+          field.required ? { required: `${field.label} is required` } : {}
         )}
         {...commonProps}
         error={!!errors[field.name]}
@@ -307,7 +307,10 @@ export function Step2({
       {formType !== 'volunteer' &&
         config.fields.map(f => (
           <Box key={f.name} sx={{ width: '100%' }}>
-            <FormLabel sx={formLabelStyles}>{f.label}</FormLabel>
+            <FormLabel sx={formLabelStyles}>
+              {f.label}
+              {f.required && ' (required)'}
+            </FormLabel>
             {renderInputField(f)}
           </Box>
         ))}
@@ -316,7 +319,10 @@ export function Step2({
         <>
           {config.fields.slice(0, 3).map(f => (
             <Box key={f.name} sx={{ width: '100%' }}>
-              <FormLabel sx={formLabelStyles}>{f.label}</FormLabel>
+              <FormLabel sx={formLabelStyles}>
+                {f.label}
+                {f.required && ' (required)'}
+              </FormLabel>
               {renderInputField(f)}
             </Box>
           ))}
@@ -386,13 +392,19 @@ export function Step2({
           </Box>
           {config.fields.slice(3, 4).map(f => (
             <Box key={f.name} sx={{ width: '100%' }}>
-              <FormLabel sx={formLabelStyles}>{f.label}</FormLabel>
+              <FormLabel sx={formLabelStyles}>
+                {f.label}
+                {f.required && ' (required)'}
+              </FormLabel>
               {renderInputField(f)}
             </Box>
           ))}
           {config.fields.slice(4).map(f => (
             <Box key={f.name} sx={{ width: '100%' }}>
-              <FormLabel sx={formLabelStyles}>{f.label}</FormLabel>
+              <FormLabel sx={formLabelStyles}>
+                {f.label}
+                {f.required && ' (required)'}
+              </FormLabel>
               {renderInputField(f)}
             </Box>
           ))}

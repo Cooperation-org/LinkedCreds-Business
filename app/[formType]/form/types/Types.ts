@@ -69,7 +69,7 @@ export interface FormData {
   teamworkRating?: string
   initiativeRating?: string
   communicationRating?: string
-  [key: string]: string | number | Portfolio[] | undefined
+  [key: string]: string | number | boolean | Portfolio[] | undefined
 }
 
 // Component Props for the form

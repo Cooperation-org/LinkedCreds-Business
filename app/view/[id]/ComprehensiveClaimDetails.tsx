@@ -14,7 +14,9 @@ import {
   ListItemText,
   Divider,
   IconButton,
-  Link as MuiLink
+  Link as MuiLink,
+  Chip,
+  Grid
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
@@ -27,29 +29,72 @@ import { GoogleDriveStorage } from '@cooperation/vc-storage'
 import EvidencePreview from './EvidencePreview'
 import { getAccessToken, getFileViaFirebase } from '../../firebase/storage'
 import QRCode from 'qrcode'
-// Define types
+
+// Define types for different VC structures
 interface Portfolio {
   name: string
   url: string
 }
+
 interface Achievement {
   name: string
   description: string
   criteria?: { narrative: string }
   image?: { id: string }
 }
+
+// Extended CredentialSubject to handle all VC types
 interface CredentialSubject {
-  name: string
+  type?: string[]
+  name?: string
+  fullName?: string
+  persons?: string
+
+  // Achievement-based (legacy skill credentials)
   achievement?: Achievement[]
   duration?: string
+
+  // Employment credentials
+  credentialName?: string
+  credentialDuration?: string
+  credentialDescription?: string
+  company?: string
+  role?: string
+
+  // Volunteering credentials
+  volunteerWork?: string
+  volunteerOrg?: string
+  volunteerDescription?: string
+  skillsGained?: string[]
+  volunteerDates?: string
+
+  // Performance review credentials
+  employeeName?: string
+  employeeJobTitle?: string
+  reviewStartDate?: string
+  reviewEndDate?: string
+  reviewDuration?: string
+  jobKnowledgeRating?: string
+  teamworkRating?: string
+  initiativeRating?: string
+  communicationRating?: string
+  overallRating?: string
+  reviewComments?: string
+  goalsNext?: string
+
+  // Common fields
   portfolio?: Portfolio[]
   createdTime?: string
   evidenceLink?: string
+  evidenceDescription?: string
+
+  // Recommendation fields
   howKnow?: string
   recommendationText?: string
   qualifications?: string
   explainAnswer?: string
 }
+
 interface ClaimDetail {
   '@context': string[]
   id: string
@@ -58,10 +103,91 @@ interface ClaimDetail {
   expirationDate: string
   credentialSubject: CredentialSubject
 }
+
 interface ComprehensiveClaimDetailsProps {
   onAchievementLoad?: (achievementName: string) => void
   fileID?: string
 }
+
+// Helper function to check if text is placeholder
+const isPlaceholderText = (text: string): boolean => {
+  if (!text || typeof text !== 'string') return true
+  const lowerText = text.toLowerCase().trim()
+  return (
+    lowerText.includes('(required)') ||
+    lowerText.includes('required:') ||
+    lowerText === '' ||
+    lowerText === 'unnamed achievement' ||
+    lowerText === 'unknown' ||
+    lowerText.includes('please enter') ||
+    lowerText.includes('enter your')
+  )
+}
+
+// Helper function to clean up field values
+const cleanFieldValue = (value: string | undefined): string => {
+  if (!value || typeof value !== 'string') return ''
+  const cleaned = value
+    .replace(/\s*\(required\):?\s*/gi, '')
+    .replace(/:\s*$/g, '')
+    .trim()
+  return isPlaceholderText(cleaned) ? '' : cleaned
+}
+
+// Helper function to determine VC type
+const getVCType = (
+  credential: ClaimDetail
+): 'employment' | 'volunteering' | 'performance-review' | 'skill' | 'recommendation' => {
+  const types = credential.type || []
+
+  if (types.includes('EmploymentCredential')) return 'employment'
+  if (types.includes('VolunteeringCredential')) return 'volunteering'
+  if (types.includes('PerformanceReviewCredential')) return 'performance-review'
+  if (
+    credential.credentialSubject?.howKnow ||
+    credential.credentialSubject?.recommendationText
+  )
+    return 'recommendation'
+
+  return 'skill' // Default to skill/achievement for legacy credentials
+}
+
+// Helper function to get credential title based on type
+const getCredentialTitle = (credential: ClaimDetail, vcType: string): string => {
+  const subject = credential.credentialSubject
+
+  switch (vcType) {
+    case 'employment':
+      const empTitle =
+        cleanFieldValue(subject?.credentialName) || cleanFieldValue(subject?.role)
+      return empTitle || 'Employment Credential'
+    case 'volunteering':
+      const volTitle = cleanFieldValue(subject?.volunteerWork)
+      return volTitle || 'Volunteering Credential'
+    case 'performance-review':
+      const prTitle = cleanFieldValue(subject?.employeeJobTitle)
+      return prTitle ? `Performance Review: ${prTitle}` : 'Performance Review'
+    case 'recommendation':
+      return 'Recommendation'
+    case 'skill':
+    default:
+      const skillTitle =
+        cleanFieldValue(subject?.achievement?.[0]?.name) ||
+        cleanFieldValue(subject?.credentialName)
+      return skillTitle || 'Skill Credential'
+  }
+}
+
+// Helper function to get person name
+const getPersonName = (subject: CredentialSubject): string => {
+  const name =
+    cleanFieldValue(subject?.fullName) ||
+    cleanFieldValue(subject?.name) ||
+    cleanFieldValue(subject?.persons) ||
+    cleanFieldValue(subject?.employeeName)
+  return name || 'Unknown Person'
+}
+
 const cleanHTML = (htmlContent: any): string => {
   if (typeof htmlContent !== 'string') {
     return ''
@@ -73,6 +199,7 @@ const cleanHTML = (htmlContent: any): string => {
     .replace(/class="[^"]*"/g, '')
     .replace(/style="[^"]*"/g, '')
 }
+
 const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
   onAchievementLoad,
   fileID: propFileID
@@ -202,6 +329,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
       [commentId]: !prevState[commentId]
     }))
   }
+
   if (status === 'loading' || loading) {
     return (
       <Box
@@ -219,361 +347,578 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
       </Typography>
     )
   }
-  setTimeout(() => {
-    if (!claimDetail) {
-      return (
-        <Typography variant='h6' align='center' sx={{ mt: 4 }}>
-          No claim details available.
-        </Typography>
-      )
-    }
-  }, 2000)
-  const credentialSubject = claimDetail?.credentialSubject
-  const achievement = credentialSubject?.achievement && credentialSubject.achievement[0]
+
+  if (!claimDetail) {
+    return (
+      <Typography variant='h6' align='center' sx={{ mt: 4 }}>
+        No claim details available.
+      </Typography>
+    )
+  }
+
+  const credentialSubject = claimDetail.credentialSubject
+  const vcType = getVCType(claimDetail)
+  const credentialTitle = getCredentialTitle(claimDetail, vcType)
+  const personName = getPersonName(credentialSubject)
   const hasValidEvidence =
     credentialSubject?.portfolio && credentialSubject?.portfolio.length > 0
-  return (
-    <Container sx={{ maxWidth: '800px' }}>
-      {claimDetail && (
-        <Box
-          sx={{
-            p: isAskForRecommendation ? '5px' : '20px',
-            gap: '20px',
-            margin: '20px auto 0',
-            border: '1px solid #003FE0',
-            borderRadius: '10px',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            justifyContent: isAskForRecommendation ? 'center' : 'flex-start',
-            position: 'relative'
-          }}
-        >
-          {fileID && !isMobile && (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: '12px',
-                zIndex: 1
-              }}
-            >
-              <Link
-                href={`/api/credential-raw/${fileID}`}
-                target='_blank'
-                style={{ textDecoration: 'none' }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    fontFamily: 'Lato',
-                    color: '#003FE0',
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      textDecoration: 'none'
-                    }
-                  }}
-                >
-                  View Source
+
+  // Render different content based on VC type
+  const renderCredentialContent = () => {
+    switch (vcType) {
+      case 'employment':
+        return (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant='h6' sx={{ mb: 2, fontWeight: 600 }}>
+              Employment Details
+            </Typography>
+            <Grid container spacing={2}>
+              {cleanFieldValue(credentialSubject.company) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Company:
+                  </Typography>
+                  <Typography>{cleanFieldValue(credentialSubject.company)}</Typography>
+                </Grid>
+              )}
+              {cleanFieldValue(credentialSubject.role) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Role:
+                  </Typography>
+                  <Typography>{cleanFieldValue(credentialSubject.role)}</Typography>
+                </Grid>
+              )}
+              {cleanFieldValue(credentialSubject.credentialDuration) && (
+                <Grid item xs={12}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Duration:
+                  </Typography>
+                  <Typography>
+                    {cleanFieldValue(credentialSubject.credentialDuration)}
+                  </Typography>
+                </Grid>
+              )}
+              {cleanFieldValue(credentialSubject.credentialDescription) && (
+                <Grid item xs={12}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Description:
+                  </Typography>
+                  <Typography>
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: cleanHTML(credentialSubject.credentialDescription)
+                      }}
+                    />
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
+        )
+
+      case 'volunteering':
+        return (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant='h6' sx={{ mb: 2, fontWeight: 600 }}>
+              Volunteering Details
+            </Typography>
+            <Grid container spacing={2}>
+              {cleanFieldValue(credentialSubject.volunteerOrg) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Organization:
+                  </Typography>
+                  <Typography>
+                    {cleanFieldValue(credentialSubject.volunteerOrg)}
+                  </Typography>
+                </Grid>
+              )}
+              {cleanFieldValue(credentialSubject.volunteerDates) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Dates:
+                  </Typography>
+                  <Typography>
+                    {cleanFieldValue(credentialSubject.volunteerDates)}
+                  </Typography>
+                </Grid>
+              )}
+              {cleanFieldValue(credentialSubject.volunteerDescription) && (
+                <Grid item xs={12}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Description:
+                  </Typography>
+                  <Typography>
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: cleanHTML(credentialSubject.volunteerDescription)
+                      }}
+                    />
+                  </Typography>
+                </Grid>
+              )}
+              {credentialSubject.skillsGained &&
+                credentialSubject.skillsGained.length > 0 &&
+                credentialSubject.skillsGained.some(
+                  skill => !isPlaceholderText(skill)
+                ) && (
+                  <Grid item xs={12}>
+                    <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                      Skills Gained:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {credentialSubject.skillsGained
+                        .filter(skill => !isPlaceholderText(skill))
+                        .map((skill, index) => (
+                          <Chip key={index} label={skill} size='small' />
+                        ))}
+                    </Box>
+                  </Grid>
+                )}
+            </Grid>
+          </Box>
+        )
+
+      case 'performance-review':
+        return (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant='h6' sx={{ mb: 2, fontWeight: 600 }}>
+              Performance Review Details
+            </Typography>
+            <Grid container spacing={2}>
+              {cleanFieldValue(credentialSubject.company) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Company:
+                  </Typography>
+                  <Typography>{cleanFieldValue(credentialSubject.company)}</Typography>
+                </Grid>
+              )}
+              {cleanFieldValue(credentialSubject.reviewDuration) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Review Period:
+                  </Typography>
+                  <Typography>
+                    {cleanFieldValue(credentialSubject.reviewDuration)}
+                  </Typography>
+                </Grid>
+              )}
+
+              {/* Ratings */}
+              {(credentialSubject.jobKnowledgeRating ||
+                credentialSubject.teamworkRating ||
+                credentialSubject.initiativeRating ||
+                credentialSubject.communicationRating) && (
+                <Grid item xs={12}>
+                  <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                    Ratings:
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {credentialSubject.jobKnowledgeRating && (
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant='body2'>
+                          Job Knowledge: {credentialSubject.jobKnowledgeRating}/5
+                        </Typography>
+                      </Grid>
+                    )}
+                    {credentialSubject.teamworkRating && (
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant='body2'>
+                          Teamwork: {credentialSubject.teamworkRating}/5
+                        </Typography>
+                      </Grid>
+                    )}
+                    {credentialSubject.initiativeRating && (
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant='body2'>
+                          Initiative: {credentialSubject.initiativeRating}/5
+                        </Typography>
+                      </Grid>
+                    )}
+                    {credentialSubject.communicationRating && (
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant='body2'>
+                          Communication: {credentialSubject.communicationRating}/5
+                        </Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Grid>
+              )}
+
+              {credentialSubject.overallRating && (
+                <Grid item xs={12}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Overall Rating:
+                  </Typography>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {credentialSubject.overallRating}/5
+                  </Typography>
+                </Grid>
+              )}
+
+              {cleanFieldValue(credentialSubject.reviewComments) && (
+                <Grid item xs={12}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Comments:
+                  </Typography>
+                  <Typography>
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: cleanHTML(credentialSubject.reviewComments)
+                      }}
+                    />
+                  </Typography>
+                </Grid>
+              )}
+
+              {cleanFieldValue(credentialSubject.goalsNext) && (
+                <Grid item xs={12}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Goals for Next Period:
+                  </Typography>
+                  <Typography>
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: cleanHTML(credentialSubject.goalsNext)
+                      }}
+                    />
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
+        )
+
+      case 'skill':
+      default:
+        const achievement = credentialSubject?.achievement?.[0]
+        return (
+          <Box sx={{ mt: 2 }}>
+            {cleanFieldValue(credentialSubject?.credentialDescription) && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                  Description:
                 </Typography>
-              </Link>
-              {qrCodeDataUrl && (
-                <img
-                  src={qrCodeDataUrl}
-                  alt='QR Code for credential source'
-                  style={{ width: '120px', height: '120px' }}
-                />
-              )}
-            </Box>
-          )}
-          {isAskForRecommendation && (
-            <Box
-              sx={{
-                width: credentialSubject?.evidenceLink ? '30%' : '0',
-                marginRight: credentialSubject?.evidenceLink ? '20px' : '15px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                overflow: 'hidden'
-              }}
-            >
-              {credentialSubject?.evidenceLink ? (
-                <EvidencePreview
-                  url={credentialSubject.evidenceLink}
-                  width={180}
-                  height={150}
-                />
-              ) : (
-                <Box
-                  sx={{ width: '15px', height: '100px', backgroundColor: 'transparent' }}
-                />
-              )}
-            </Box>
-          )}
-          <Box sx={{ flex: 1 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                justifyContent: 'center'
-              }}
-            >
-              <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                <SVGBadge />
-                <Typography
-                  sx={{
-                    color: 't3BodyText',
-                    fontSize: '24px',
-                    fontWeight: 700,
-                    wordBreak: 'break-word',
-                    whiteSpace: 'pre-line',
-                    overflowWrap: 'anywhere'
-                  }}
-                >
-                  {credentialSubject?.name} has claimed:
+                <Typography>
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: cleanHTML(credentialSubject.credentialDescription)
+                    }}
+                  />
                 </Typography>
               </Box>
+            )}
+            {achievement?.description && cleanFieldValue(achievement.description) && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                  How you earned this skill:
+                </Typography>
+                <Typography>
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: cleanHTML(achievement.description)
+                    }}
+                  />
+                </Typography>
+              </Box>
+            )}
+            {achievement?.criteria?.narrative &&
+              cleanFieldValue(achievement.criteria.narrative) && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                    What does that entail?:
+                  </Typography>
+                  <ul style={{ marginLeft: '25px', marginTop: '8px' }}>
+                    <li>
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: cleanHTML(achievement.criteria.narrative)
+                        }}
+                      />
+                    </li>
+                  </ul>
+                </Box>
+              )}
+          </Box>
+        )
+    }
+  }
+
+  return (
+    <Container sx={{ maxWidth: '800px' }}>
+      <Box
+        sx={{
+          p: isAskForRecommendation ? '5px' : '20px',
+          gap: '20px',
+          margin: '20px auto 0',
+          border: '1px solid #003FE0',
+          borderRadius: '10px',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          justifyContent: isAskForRecommendation ? 'center' : 'flex-start',
+          position: 'relative'
+        }}
+      >
+        {fileID && !isMobile && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: '12px',
+              zIndex: 1
+            }}
+          >
+            <Link
+              href={`/api/credential-raw/${fileID}`}
+              target='_blank'
+              style={{ textDecoration: 'none' }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  fontFamily: 'Lato',
+                  color: '#003FE0',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    textDecoration: 'none'
+                  }
+                }}
+              >
+                View Source
+              </Typography>
+            </Link>
+            {qrCodeDataUrl && (
+              <img
+                src={qrCodeDataUrl}
+                alt='QR Code for credential source'
+                style={{ width: '120px', height: '120px' }}
+              />
+            )}
+          </Box>
+        )}
+
+        {isAskForRecommendation && (
+          <Box
+            sx={{
+              width: credentialSubject?.evidenceLink ? '30%' : '0',
+              marginRight: credentialSubject?.evidenceLink ? '20px' : '15px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              overflow: 'hidden'
+            }}
+          >
+            {credentialSubject?.evidenceLink ? (
+              <EvidencePreview
+                url={credentialSubject.evidenceLink}
+                width={180}
+                height={150}
+              />
+            ) : (
+              <Box
+                sx={{ width: '15px', height: '100px', backgroundColor: 'transparent' }}
+              />
+            )}
+          </Box>
+        )}
+
+        <Box sx={{ flex: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              justifyContent: 'center'
+            }}
+          >
+            <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+              <SVGBadge />
               <Typography
                 sx={{
                   color: 't3BodyText',
                   fontSize: '24px',
                   fontWeight: 700,
-                  mt: 2,
                   wordBreak: 'break-word',
                   whiteSpace: 'pre-line',
                   overflowWrap: 'anywhere'
                 }}
               >
-                {achievement?.name ?? 'Unnamed Achievement'}
+                {personName} has claimed:
               </Typography>
             </Box>
-            {credentialSubject?.duration && (
-              <Box
+            <Typography
+              sx={{
+                color: 't3BodyText',
+                fontSize: '24px',
+                fontWeight: 700,
+                mt: 2,
+                wordBreak: 'break-word',
+                whiteSpace: 'pre-line',
+                overflowWrap: 'anywhere'
+              }}
+            >
+              {credentialTitle}
+            </Typography>
+          </Box>
+
+          {(cleanFieldValue(credentialSubject?.duration) ||
+            cleanFieldValue(credentialSubject?.credentialDuration)) && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2px',
+                padding: '2px 5px',
+                borderRadius: '5px',
+                width: 'fit-content',
+                mb: '10px',
+                bgcolor: '#d5e1fb',
+                mt: 2
+              }}
+            >
+              <Box sx={{ mt: '2px' }}>
+                <SVGDate />
+              </Box>
+              <Typography
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '2px',
-                  padding: '2px 5px',
-                  borderRadius: '5px',
-                  width: 'fit-content',
-                  mb: '10px',
-                  bgcolor: '#d5e1fb',
-                  mt: 2
+                  color: 't3BodyText',
+                  fontSize: '13px',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-line',
+                  overflowWrap: 'anywhere'
                 }}
               >
-                <Box sx={{ mt: '2px' }}>
-                  <SVGDate />
-                </Box>
-                <Typography
-                  sx={{
-                    color: 't3BodyText',
-                    fontSize: '13px',
-                    wordBreak: 'break-word',
-                    whiteSpace: 'pre-line',
-                    overflowWrap: 'anywhere'
-                  }}
-                >
-                  {credentialSubject?.duration}
-                </Typography>
-              </Box>
-            )}
-            {!isAskForRecommendation && (
-              <>
-                {credentialSubject?.evidenceLink && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '20px',
-                      my: '10px',
-                      justifyContent: 'center',
-                      width: '100%'
-                    }}
-                  >
-                    <EvidencePreview
-                      url={credentialSubject.evidenceLink}
-                      width={180}
-                      height={150}
-                    />
-                  </Box>
-                )}
-                {achievement?.description && (
-                  <Link href={credentialSubject?.evidenceLink ?? ''} target='_blank'>
-                    <Typography
-                      sx={{
-                        cursor: 'pointer',
-                        fontFamily: 'Lato',
-                        fontSize: '17px',
-                        letterSpacing: '0.075px',
-                        lineHeight: '24px',
-                        mt: 2,
-                        wordBreak: 'break-word',
-                        whiteSpace: 'pre-line',
-                        overflowWrap: 'anywhere'
-                      }}
-                    >
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html: cleanHTML(achievement.description)
-                        }}
-                      />
-                    </Typography>
-                  </Link>
-                )}
-                {achievement?.criteria?.narrative && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography>What does that entail?:</Typography>
-                    <ul
-                      style={{
-                        marginLeft: '25px',
-                        wordBreak: 'break-word',
-                        whiteSpace: 'pre-line',
-                        overflowWrap: 'anywhere'
-                      }}
-                    >
-                      <li>
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: cleanHTML(achievement?.criteria?.narrative)
-                          }}
-                          style={{
-                            wordBreak: 'break-word',
-                            whiteSpace: 'pre-line',
-                            overflowWrap: 'anywhere'
-                          }}
-                        />
-                      </li>
-                    </ul>
-                  </Box>
-                )}
-                {hasValidEvidence &&
-                  credentialSubject?.portfolio?.some(item => item.name && item.url) && (
-                    <Box sx={{ mt: 3 }}>
-                      <Typography
-                        sx={{
-                          fontWeight: 600,
-                          wordBreak: 'break-word',
-                          whiteSpace: 'pre-line',
-                          overflowWrap: 'anywhere'
-                        }}
-                      >
-                        Supporting Evidence / Portfolio:
-                      </Typography>
-                      <ul
-                        style={{
-                          marginLeft: '25px',
-                          textDecorationLine: 'underline',
-                          color: 'blue',
-                          wordBreak: 'break-word',
-                          whiteSpace: 'pre-line',
-                          overflowWrap: 'anywhere'
-                        }}
-                      >
-                        {credentialSubject?.portfolio
-                          ?.filter(item => item.name && item.url)
-                          .map((portfolioItem, idx) => (
-                            <li
-                              key={`main-portfolio-${idx}`}
-                              style={{
-                                cursor: 'pointer',
-                                width: 'fit-content',
-                                marginBottom: '10px',
-                                wordBreak: 'break-word',
-                                whiteSpace: 'pre-line',
-                                overflowWrap: 'anywhere'
-                              }}
-                            >
-                              <Link
-                                href={portfolioItem.url}
-                                target='_blank'
-                                rel='noopener noreferrer'
-                              >
-                                {portfolioItem.name}
-                              </Link>
-                            </li>
-                          ))}
-                      </ul>
-                    </Box>
-                  )}
-              </>
-            )}
-            {/* {pathname?.includes('/claims') && (
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-                <Link href={`/view/${fileID}`}>
-                  <Button
-                    variant='contained'
-                    sx={{
-                      backgroundColor: '#003FE0',
-                      textTransform: 'none',
-                      borderRadius: '100px'
-                    }}
-                  >
-                    View Credential
-                  </Button>
-                </Link>
-                <Link href={`/askforrecommendation/${fileID}`}>
-                  <Button
-                    variant='contained'
-                    sx={{
-                      backgroundColor: '#003FE0',
-                      textTransform: 'none',
-                      borderRadius: '100px'
-                    }}
-                  >
-                    Ask for Recommendation
-                  </Button>
-                </Link>
-              </Box>
-            )} */}
-            {(pathname?.includes('/view') || !!propFileID) &&
-              claimDetail &&
-              !isRecommendationsPage && (
+                {cleanFieldValue(credentialSubject?.duration) ||
+                  cleanFieldValue(credentialSubject?.credentialDuration)}
+              </Typography>
+            </Box>
+          )}
+
+          {!isAskForRecommendation && (
+            <>
+              {credentialSubject?.evidenceLink && (
                 <Box
                   sx={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '4px',
-                    mt: '20px'
+                    alignItems: 'center',
+                    gap: '20px',
+                    my: '10px',
+                    justifyContent: 'center',
+                    width: '100%'
                   }}
                 >
-                  <Typography
-                    sx={{ fontSize: '13px', fontWeight: 700, color: '#000E40' }}
-                  >
-                    Credential Details
-                  </Typography>
-                  <Box
-                    sx={{ display: 'flex', gap: '5px', mt: '10px', alignItems: 'center' }}
-                  >
-                    <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
-                      <CheckMarkSVG />
-                    </Box>
-                    <Typography>Has a valid digital signature</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
-                      <CheckMarkSVG />
-                    </Box>
-                    <Typography>Has not expired</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
-                      <CheckMarkSVG />
-                    </Box>
-                    <Typography>Has not been revoked by issuer</Typography>
-                  </Box>
+                  <EvidencePreview
+                    url={credentialSubject.evidenceLink}
+                    width={180}
+                    height={150}
+                  />
                 </Box>
               )}
-          </Box>
+
+              {/* Render credential-specific content */}
+              {renderCredentialContent()}
+
+              {hasValidEvidence &&
+                credentialSubject?.portfolio?.some(item => item.name && item.url) && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 600,
+                        wordBreak: 'break-word',
+                        whiteSpace: 'pre-line',
+                        overflowWrap: 'anywhere'
+                      }}
+                    >
+                      Supporting Evidence / Portfolio:
+                    </Typography>
+                    <ul
+                      style={{
+                        marginLeft: '25px',
+                        textDecorationLine: 'underline',
+                        color: 'blue',
+                        wordBreak: 'break-word',
+                        whiteSpace: 'pre-line',
+                        overflowWrap: 'anywhere'
+                      }}
+                    >
+                      {credentialSubject?.portfolio
+                        ?.filter(item => item.name && item.url)
+                        .map((portfolioItem, idx) => (
+                          <li
+                            key={`main-portfolio-${idx}`}
+                            style={{
+                              cursor: 'pointer',
+                              width: 'fit-content',
+                              marginBottom: '10px',
+                              wordBreak: 'break-word',
+                              whiteSpace: 'pre-line',
+                              overflowWrap: 'anywhere'
+                            }}
+                          >
+                            <Link
+                              href={portfolioItem.url}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                            >
+                              {portfolioItem.name}
+                            </Link>
+                          </li>
+                        ))}
+                    </ul>
+                  </Box>
+                )}
+            </>
+          )}
+
+          {(pathname?.includes('/view') || !!propFileID) &&
+            claimDetail &&
+            !isRecommendationsPage && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  mt: '20px'
+                }}
+              >
+                <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#000E40' }}>
+                  Credential Details
+                </Typography>
+                <Box
+                  sx={{ display: 'flex', gap: '5px', mt: '10px', alignItems: 'center' }}
+                >
+                  <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
+                    <CheckMarkSVG />
+                  </Box>
+                  <Typography>Has a valid digital signature</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                  <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
+                    <CheckMarkSVG />
+                  </Box>
+                  <Typography>Has not expired</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                  <Box sx={{ borderRadius: '4px', bgcolor: '#C2F1BE', p: '4px' }}>
+                    <CheckMarkSVG />
+                  </Box>
+                  <Typography>Has not been revoked by issuer</Typography>
+                </Box>
+              </Box>
+            )}
         </Box>
-      )}
+      </Box>
 
       {fileID && isMobile && (
         <Box
@@ -687,10 +1032,10 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                           <SVGBadge />
                           <Box>
                             <Typography variant='h6' component='div'>
-                              {comment.credentialSubject?.name}
+                              {getPersonName(comment.credentialSubject)}
                             </Typography>
                             <Typography variant='body2' color='text.secondary'>
-                              Vouched for {credentialSubject?.name}
+                              Vouched for {personName}
                             </Typography>
                           </Box>
                         </Box>
