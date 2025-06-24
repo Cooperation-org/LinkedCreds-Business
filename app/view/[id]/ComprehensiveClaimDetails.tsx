@@ -124,6 +124,37 @@ const isPlaceholderText = (text: string): boolean => {
   )
 }
 
+// Helper function to extract actual content from mixed placeholder/content strings
+const extractActualContent = (text: string): string => {
+  if (!text || typeof text !== 'string') return ''
+
+  // Remove common placeholder patterns and extract the actual content
+  let cleaned = text
+    .replace(/.*\(required\)\s*/gi, '') // Remove "Something (required) " pattern
+    .replace(/.*required:\s*/gi, '') // Remove "Something required: " pattern
+    .replace(/^[^:]*:\s*/g, '') // Remove "Label: " pattern
+    .trim()
+
+  // Check if we have meaningful content after cleaning (avoid recursive call)
+  if (cleaned && cleaned.length > 0) {
+    const lowerCleaned = cleaned.toLowerCase()
+    const isStillPlaceholder =
+      lowerCleaned.includes('(required)') ||
+      lowerCleaned.includes('required:') ||
+      lowerCleaned === '' ||
+      lowerCleaned === 'unnamed achievement' ||
+      lowerCleaned === 'unknown' ||
+      lowerCleaned.includes('please enter') ||
+      lowerCleaned.includes('enter your')
+
+    if (!isStillPlaceholder) {
+      return cleaned
+    }
+  }
+
+  return ''
+}
+
 // Helper function to clean up field values
 const cleanFieldValue = (value: string | undefined): string => {
   if (!value || typeof value !== 'string') return ''
@@ -458,24 +489,18 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                   </Typography>
                 </Grid>
               )}
-              {credentialSubject.skillsGained &&
-                credentialSubject.skillsGained.length > 0 &&
-                credentialSubject.skillsGained.some(
-                  skill => !isPlaceholderText(skill)
-                ) && (
-                  <Grid item xs={12}>
-                    <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                      Skills Gained:
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {credentialSubject.skillsGained
-                        .filter(skill => !isPlaceholderText(skill))
-                        .map((skill, index) => (
-                          <Chip key={index} label={skill} size='small' />
-                        ))}
-                    </Box>
-                  </Grid>
-                )}
+              {credentialSubject.skillsGained && (
+                <Grid item xs={12}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Skills Gained:
+                  </Typography>
+                  <Typography>
+                    {Array.isArray(credentialSubject.skillsGained)
+                      ? credentialSubject.skillsGained.join(', ')
+                      : credentialSubject.skillsGained}
+                  </Typography>
+                </Grid>
+              )}
             </Grid>
           </Box>
         )
