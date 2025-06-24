@@ -52,44 +52,81 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
 
   const isPerformanceReview = formType === 'performance-review'
 
-  const methods = useForm<FormData>({
-    defaultValues: {
+  const getDefaultValues = (formType: string): Partial<FormData> => {
+    const baseDefaults = {
       storageOption: 'Google Drive',
       fullName: session?.user?.name ?? '',
-      persons: '',
-      credentialName: '',
-      credentialDuration: '',
-      credentialDescription: '',
       portfolio: [],
-      evidenceLink: '',
-      description: '',
-      volunteerWork: '',
-      volunteerOrg: '',
-      volunteerDescription: '',
-      duration: '',
-      timeSpent: '',
-      skillsGained: '',
-      volunteerDates: '',
-      role: '',
-      company: '',
-      employeeName: '',
-      employeeJobTitle: '',
-      reviewComments: '',
-      overallRating: '',
-      goalsNext: '',
-      reviewDates: '',
-      documentType: '',
-      documentNumber: '',
-      issuingCountry: '',
-      expirationDate: '',
-      reviewEndDate: '',
-      reviewStartDate: '',
-      reviewDuration: '',
-      jobKnowledgeRating: '',
-      teamworkRating: '',
-      initiativeRating: '',
-      communicationRating: ''
-    },
+      evidenceLink: ''
+    }
+
+    switch (formType) {
+      case 'skill':
+        return {
+          ...baseDefaults,
+          persons: '',
+          credentialName: '',
+          credentialDuration: '',
+          credentialDescription: '',
+          description: ''
+        }
+
+      case 'volunteer':
+        return {
+          ...baseDefaults,
+          volunteerWork: '',
+          volunteerOrg: '',
+          volunteerDescription: '',
+          duration: '',
+          timeSpent: '',
+          skillsGained: [],
+          volunteerDates: '',
+          showDuration: false,
+          currentVolunteer: false
+        }
+
+      case 'role':
+        return {
+          ...baseDefaults,
+          role: '',
+          company: ''
+        }
+
+      case 'performance-review':
+        return {
+          ...baseDefaults,
+          role: '',
+          company: '',
+          employeeName: '',
+          employeeJobTitle: '',
+          reviewComments: '',
+          overallRating: '',
+          goalsNext: '',
+          reviewStartDate: '',
+          reviewEndDate: '',
+          reviewDuration: '',
+          jobKnowledgeRating: '',
+          teamworkRating: '',
+          initiativeRating: '',
+          communicationRating: ''
+        }
+
+      case 'identity-verification':
+        return {
+          ...baseDefaults,
+          documentType: '',
+          documentNumber: '',
+          issuingCountry: '',
+          expirationDate: ''
+        }
+
+      default:
+        return baseDefaults
+    }
+  }
+
+  const methods = useForm<FormData>({
+    defaultValues: getDefaultValues(formType),
     mode: 'onChange',
     reValidateMode: 'onChange'
   })
@@ -103,7 +140,11 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
       } else {
         setActiveStep(0)
       }
-      methods.reset()
+      const defaultValues = getDefaultValues(formType)
+      console.log('Setting default values for', formType, ':', defaultValues)
+      localStorage.removeItem('formData')
+
+      methods.reset(defaultValues)
     }
   }, [formType, setActiveStep, methods, accessToken])
 
@@ -141,6 +182,14 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
   }
 
   const handleFormSubmit = methods.handleSubmit(async (d: FormData) => {
+    console.log('=== FORM SUBMIT DEBUG ===')
+    console.log('Form submitted with data:', JSON.stringify(d, null, 2))
+    console.log(
+      'Current form values from watch:',
+      JSON.stringify(methods.watch(), null, 2)
+    )
+    console.log('=========================')
+
     try {
       await sign(d)
     } catch {
@@ -149,6 +198,12 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
   })
 
   const sign = async (data: FormData) => {
+    // DEBUG: Log the form data before processing
+    console.log('=== FORM DATA DEBUG ===')
+    console.log('FormType:', formType)
+    console.log('Raw form data:', JSON.stringify(data, null, 2))
+    console.log('=======================')
+
     if (formType === 'volunteer') {
       if (data.showDuration) {
         data.duration = String(data.duration) + (data.currentVolunteer ? ' -present' : '')
@@ -185,7 +240,8 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
     try {
       const { didDocument, keyPair, issuerId } = await createDID(accessToken)
       await saveToGoogleDrive({ storage, data: { didDocument, keyPair }, type: 'DID' })
-      const credRes = await signCred(accessToken, data, issuerId, keyPair, 'VC')
+      console.log('[VC SIGNING] formType:', formType, 'formData:', data)
+      const credRes = await signCred(accessToken, data, issuerId, keyPair, 'VC', formType)
       const file: any = await saveToGoogleDrive({ storage, data: credRes, type: 'VC' })
       await storeFileTokens({
         googleFileId: file.id,
@@ -449,7 +505,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
                     <SuccessPage
                       formData={methods.watch()}
                       setActiveStep={setActiveStep}
-                      reset={methods.reset}
+                      reset={() => methods.reset(getDefaultValues(formType))}
                       link={link}
                       setLink={setLink}
                       setFileId={setFileId}
@@ -467,7 +523,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
                     <SuccessPage
                       formData={methods.watch()}
                       setActiveStep={setActiveStep}
-                      reset={methods.reset}
+                      reset={() => methods.reset(getDefaultValues(formType))}
                       link={link}
                       setLink={setLink}
                       setFileId={setFileId}

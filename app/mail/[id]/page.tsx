@@ -68,7 +68,8 @@ export default function MailRecommendation() {
         setDriveData(content as any)
         const achievement = content?.data?.credentialSubject?.achievement?.[0]
         const name = achievement?.name || 'your skill'
-        const baseMessage = generateMessage(name, fileID)
+        const credentialType = content?.data?.type?.[1] || 'skill'
+        const baseMessage = generateMessage(name, fileID, credentialType)
         setMessageToCopy(baseMessage)
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -82,14 +83,37 @@ export default function MailRecommendation() {
     }
   }, [fileID, getContent])
 
-  const generateMessage = (skillName: string, id: string) => {
-    return `Hey there! I hope you're doing well. I am writing to ask if you would consider supporting me by providing validation of my expertise as a ${skillName}. If you're comfortable, could you please take a moment to write a brief reference highlighting your observations of my skills and how they have contributed to the work we have done together? It would mean a lot to me!\n\nthis is the link https://linked-creds-author-businees-enhancement.vercel.app/recommendations/${id}`
+  const generateMessage = (skillName: string, id: string, credentialType?: string) => {
+    const getCredentialTypeLabel = (type?: string) => {
+      if (!type) return 'expertise'
+
+      switch (type.toLowerCase()) {
+        case 'employmentcredential':
+        case 'employment':
+        case 'role':
+          return 'employment experience'
+        case 'volunteeringcredential':
+        case 'volunteering':
+        case 'volunteer':
+          return 'volunteer experience'
+        case 'performancereviewcredential':
+        case 'performance-review':
+        case 'performancereview':
+          return 'performance review'
+        case 'skill':
+        default:
+          return 'expertise'
+      }
+    }
+
+    const credentialLabel = getCredentialTypeLabel(credentialType)
+    return `Hey there! I hope you're doing well. I am writing to ask if you would consider supporting me by providing validation of my ${credentialLabel} in ${skillName}. If you're comfortable, could you please take a moment to write a brief reference highlighting your observations of my capabilities and how they have contributed to the work we have done together? It would mean a lot to me!\n\nthis is the link https://linked-creds-author-businees-enhancement.vercel.app/recommendations/${id}`
   }
 
-  const handleAchievementLoad = (name: string) => {
+  const handleAchievementLoad = (name: string, credentialType?: string) => {
     if (name && name !== achievementName) {
       setAchievementName(name)
-      const updatedMessage = generateMessage(name, fileID)
+      const updatedMessage = generateMessage(name, fileID, credentialType)
       setMessageToCopy(updatedMessage)
       reset({
         reference: updatedMessage

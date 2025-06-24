@@ -190,6 +190,40 @@ const withResolversPolyfill = <T,>() => {
   return { promise, resolve, reject }
 }
 
+// Add helper function to safely get credential name
+const getCredentialName = (claim: any): string => {
+  // Handle new credential format (direct access)
+  if (claim.credentialSubject?.employeeName) {
+    return `Performance Review: ${claim.credentialSubject.employeeJobTitle || 'Unknown Position'}`
+  }
+  if (claim.credentialSubject?.volunteerWork) {
+    return `Volunteer: ${claim.credentialSubject.volunteerWork}`
+  }
+  if (claim.credentialSubject?.role) {
+    return `Employment: ${claim.credentialSubject.role}`
+  }
+  if (claim.credentialSubject?.credentialName) {
+    return claim.credentialSubject.credentialName
+  }
+
+  // Handle old credential format (achievement array)
+  if (claim.credentialSubject?.achievement?.[0]?.name) {
+    return claim.credentialSubject.achievement[0].name
+  }
+
+  // Fallback
+  return 'Unknown Credential'
+}
+
+// Add helper function to safely get credential type
+const getCredentialType = (claim: any): string => {
+  const types = claim.type || []
+  if (types.includes('EmploymentCredential')) return 'Employment'
+  if (types.includes('VolunteeringCredential')) return 'Volunteer'
+  if (types.includes('PerformanceReviewCredential')) return 'Performance Review'
+  return 'Skill'
+}
+
 const ClaimsPageClient: React.FC = () => {
   const [claims, setClaims] = useState<any[]>([])
   console.log(': claims', claims)
@@ -242,12 +276,11 @@ const ClaimsPageClient: React.FC = () => {
 
   const handleEmailShare = (claim: any, e?: React.MouseEvent) => {
     e?.stopPropagation()
-    const claimId = claim.id.id
-    const mailPageUrl = `${window.location.origin}/mail/${claimId}`
-    if (userEmail) {
-      updateClickRates(userEmail, 'shareCredential')
-    }
-    window.location.href = mailPageUrl
+    const credentialName = getCredentialName(claim)
+    const subject = `Check out my ${getCredentialType(claim)}: ${credentialName}`
+    const body = `I wanted to share my verified ${getCredentialType(claim).toLowerCase()} credential with you: ${credentialName}\n\nYou can view it here: ${window.location.origin}/view/${claim.id.id}`
+    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    window.location.href = mailtoLink
   }
   const handleDesktopMenuOpen = (event: React.MouseEvent<HTMLElement>, claim: any) => {
     event.stopPropagation()
@@ -256,17 +289,16 @@ const ClaimsPageClient: React.FC = () => {
   }
 
   const generateLinkedInUrl = (claim: any) => {
-    const issuanceDate = new Date(claim.issuanceDate)
-    const expirationDate = new Date(claim.expirationDate)
     const baseLinkedInUrl = 'https://www.linkedin.com/profile/add'
+    const credentialName = getCredentialName(claim)
     const params = new URLSearchParams({
       startTask: 'CERTIFICATION_NAME',
-      name: claim.credentialSubject.achievement?.[0]?.name ?? 'Certification Name',
-      organizationName: 'Self-Issued',
-      issueYear: issuanceDate.getFullYear().toString(),
-      issueMonth: (issuanceDate.getMonth() + 1).toString(),
-      expirationYear: expirationDate.getFullYear().toString(),
-      expirationMonth: (expirationDate.getMonth() + 1).toString(),
+      name: credentialName,
+      organizationName: 'LinkedTrust',
+      issueYear: '2024',
+      issueMonth: '8',
+      expirationYear: '2025',
+      expirationMonth: '8',
       certUrl: `https://linked-creds-author-businees-enhancement.vercel.app/view/${claim.id.id}`
     })
     return `${baseLinkedInUrl}?${params.toString()}`
@@ -433,14 +465,14 @@ const ClaimsPageClient: React.FC = () => {
             variant='nextButton'
             onClick={() => router.push('/newcredential')}
           >
-            Add a new skill
+            Add a new credential
           </Button>
 
           <Typography
             variant='subtitle1'
             sx={{ fontSize: '24px', fontFamily: 'Lato', mt: 2 }}
           >
-            Work with my existing skills:
+            Work with my existing credentials:
           </Typography>
         </Box>
       )}
@@ -455,14 +487,14 @@ const ClaimsPageClient: React.FC = () => {
           }}
         >
           <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
-            My Skills
+            My Credentials
           </Typography>
           <Button
             variant='nextButton'
             sx={{ textTransform: 'none' }}
             onClick={() => router.push('/newcredential')}
           >
-            Add a new skill
+            Add a new credential
           </Button>
         </Box>
       )}
@@ -470,14 +502,14 @@ const ClaimsPageClient: React.FC = () => {
       {claims.length === 0 && !loading && !accessToken && (
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
           <Typography variant='h6'>
-            Please Sign in to be able to see your skills.
+            Please Sign in to be able to see your credentials.
           </Typography>
         </Box>
       )}
 
       {claims.length === 0 && !loading && accessToken && (
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-          <Typography variant='h6'>You don&apos;t have any skills yet.</Typography>
+          <Typography variant='h6'>You don&apos;t have any credentials yet.</Typography>
         </Box>
       )}
 
@@ -527,7 +559,7 @@ const ClaimsPageClient: React.FC = () => {
                         )
                       }}
                     >
-                      {claim.credentialSubject.achievement[0]?.name}
+                      {getCredentialName(claim)}
                     </Typography>
                   </Box>
                 ) : (
@@ -551,7 +583,7 @@ const ClaimsPageClient: React.FC = () => {
                           )
                         }}
                       >
-                        {claim.credentialSubject.achievement[0]?.name}
+                        {getCredentialName(claim)}
                       </Typography>
                       <Typography
                         sx={{
@@ -564,7 +596,7 @@ const ClaimsPageClient: React.FC = () => {
                       </Typography>
                     </Box>
                     <Typography sx={{ color: 'text.secondary' }}>
-                      {claim.credentialSubject?.name} -{' '}
+                      {claim.credentialSubject?.name} - {getCredentialType(claim)} -{' '}
                       {getTimeDifference(claim.issuanceDate)}
                     </Typography>
                   </Box>
@@ -671,7 +703,7 @@ const ClaimsPageClient: React.FC = () => {
                         '&:hover': { bgcolor: 'primary.50' }
                       }}
                     >
-                      View Claim
+                      View Credential
                     </Button>
                     <Button
                       startIcon={<SVGLinkedIn />}
@@ -757,7 +789,7 @@ const ClaimsPageClient: React.FC = () => {
           >
             <VisibilityIcon sx={{ color: '#003fe0' }} />
             <Typography sx={{ textDecoration: 'underline', color: '#003fe0' }}>
-              View Claim
+              View Credential
             </Typography>
             <SVGExport />
           </MenuItem>
@@ -835,7 +867,7 @@ const ClaimsPageClient: React.FC = () => {
           }}
         >
           <Typography variant='h6' sx={{ fontWeight: 'bold', fontFamily: 'Lato' }}>
-            Claim Details
+            Credential Details
           </Typography>
           <Button
             onClick={handleCloseViewClaimDialog}
