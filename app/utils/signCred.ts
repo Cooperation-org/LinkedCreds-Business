@@ -168,6 +168,7 @@ const processCredentialData = (data: FormData, formType?: string) => {
   // Remove UI-specific fields that shouldn't be in the credential
   delete processedData.showDuration
   delete processedData.currentVolunteer
+  delete processedData.timeSpent
 
   // Clean up portfolio data (remove googleId for the credential)
   if (processedData.portfolio && processedData.portfolio.length > 0) {
