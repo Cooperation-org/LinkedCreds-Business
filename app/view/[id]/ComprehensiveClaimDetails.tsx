@@ -487,12 +487,40 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
               Performance Review Details
             </Typography>
             <Grid container spacing={2}>
+              {cleanFieldValue(credentialSubject.employeeName) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Employee Name:
+                  </Typography>
+                  <Typography>
+                    {cleanFieldValue(credentialSubject.employeeName)}
+                  </Typography>
+                </Grid>
+              )}
+              {cleanFieldValue(credentialSubject.employeeJobTitle) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Employee Job Title:
+                  </Typography>
+                  <Typography>
+                    {cleanFieldValue(credentialSubject.employeeJobTitle)}
+                  </Typography>
+                </Grid>
+              )}
               {cleanFieldValue(credentialSubject.company) && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Company:
                   </Typography>
                   <Typography>{cleanFieldValue(credentialSubject.company)}</Typography>
+                </Grid>
+              )}
+              {cleanFieldValue(credentialSubject.role) && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Reviewer Role:
+                  </Typography>
+                  <Typography>{cleanFieldValue(credentialSubject.role)}</Typography>
                 </Grid>
               )}
               {cleanFieldValue(credentialSubject.reviewDuration) && (

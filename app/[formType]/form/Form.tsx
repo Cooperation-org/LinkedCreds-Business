@@ -79,7 +79,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
           volunteerDescription: '',
           duration: '',
           timeSpent: '',
-          skillsGained: [],
+          skillsGained: '',
           volunteerDates: '',
           showDuration: false,
           currentVolunteer: false
@@ -213,6 +213,14 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
       }
       delete data.showDuration
       delete data.currentVolunteer
+
+      // Convert skillsGained from string to array
+      if (data.skillsGained && typeof data.skillsGained === 'string') {
+        ;(data as any).skillsGained = (data.skillsGained as string)
+          .split(/\n|,|•/)
+          .map((skill: string) => skill.trim())
+          .filter((skill: string) => skill.length > 0)
+      }
     }
 
     if (formType === 'volunteer' && data.volunteerWork) {
