@@ -60,8 +60,25 @@ const BulletList = styled('ul')({
   paddingLeft: 18
 })
 
-const BulletField = ({ label, value }: { label: string; value?: string }) => {
-  const items = value?.split(/\n|,|•/).filter(Boolean) || []
+const BulletField = ({
+  label,
+  value
+}: {
+  label: string
+  value?: string | string[] | any
+}) => {
+  let items: string[] = []
+
+  if (Array.isArray(value)) {
+    items = value.filter(Boolean).map(item => String(item))
+  } else if (typeof value === 'string') {
+    items = value.split(/\n|,|•/).filter(Boolean)
+  } else if (value != null) {
+    items = String(value)
+      .split(/\n|,|•/)
+      .filter(Boolean)
+  }
+
   return (
     <Box sx={{ mb: 2.5 }}>
       <Label>{label}</Label>
