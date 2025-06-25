@@ -370,8 +370,6 @@ const CredentialTracker: React.FC<TrackerProps> = ({
   }
 
   const renderMedia = () => {
-    if (segment === 'role') return null
-
     if (formData?.evidenceLink) {
       return (
         <Box sx={{ textAlign: 'center', mb: 2.5 }}>
