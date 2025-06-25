@@ -5,6 +5,7 @@ import { Box, Typography, styled, Card, Snackbar, Alert } from '@mui/material'
 import FileListDisplay from './FileList'
 import { SVGUploadMedia } from '../Assets/SVGs'
 import { FileItem } from '../[formType]/form/types/Types'
+import { useDropzone } from 'react-dropzone'
 
 const CardStyle = styled(Card)({
   padding: '40px 20px',
@@ -57,10 +58,8 @@ const MediaUploadSection: React.FC<Props> = ({
   onReorder,
   hideUpload = false
 }) => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const openPicker = () => fileInputRef.current?.click()
   const handleCloseError = () => setError(null)
 
   const validateAndConvert = useCallback(
@@ -90,22 +89,16 @@ const MediaUploadSection: React.FC<Props> = ({
     [maxSizeMB]
   )
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const list = e.target.files
-    if (!list) return
-
-    const overshoot = files.length + list.length - maxFiles
+  const handleFileDrop = async (acceptedFiles: File[]) => {
+    const overshoot = files.length + acceptedFiles.length - maxFiles
     if (overshoot > 0) {
       setError(`You can only upload ${maxFiles} files. Remove ${overshoot} first.`)
       return
     }
 
-    const processed = await Promise.all(Array.from(list).map(validateAndConvert))
+    const processed = await Promise.all(acceptedFiles.map(validateAndConvert))
     const validItems = processed.filter(Boolean) as FileItem[]
-    if (!validItems.length) {
-      e.target.value = ''
-      return
-    }
+    if (!validItems.length) return
 
     const merged = [...files]
     const hasFeatured = merged.some(f => f.isFeatured)
@@ -116,8 +109,32 @@ const MediaUploadSection: React.FC<Props> = ({
     })
 
     onFilesSelected(merged)
-    e.target.value = ''
   }
+
+  const { getRootProps, getInputProps, open } = useDropzone({
+    onDrop: handleFileDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif'],
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [
+        '.docx'
+      ],
+      'application/vnd.ms-powerpoint': ['.ppt'],
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': [
+        '.pptx'
+      ],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'video/mp4': ['.mp4'],
+      'video/quicktime': ['.mov']
+    },
+    maxSize: maxSizeMB * 1024 * 1024,
+    multiple: true,
+    noClick: true,
+    noKeyboard: hideUpload,
+    noDrag: hideUpload
+  })
 
   return (
     <Box width='100%'>
@@ -132,24 +149,19 @@ const MediaUploadSection: React.FC<Props> = ({
 
         {/* Only show upload area if not hidden */}
         {!hideUpload && (
-          <>
-            <Box onClick={openPicker} sx={{ textAlign: 'center', cursor: 'pointer' }}>
-              <SVGUploadMedia />
-              <Typography variant='body1' color='primary'>
-                + Add media
-                <br />
-                (images, documents, video)
-              </Typography>
-            </Box>
-            <input
-              type='file'
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept={ALLOWED_TYPES.join(',')}
-              multiple
-              hidden
-            />
-          </>
+          <Box
+            {...getRootProps()}
+            onClick={open}
+            sx={{ textAlign: 'center', cursor: 'pointer' }}
+          >
+            <input {...getInputProps()} />
+            <SVGUploadMedia />
+            <Typography variant='body1' color='primary'>
+              + Add media
+              <br />
+              (images, documents, video)
+            </Typography>
+          </Box>
         )}
       </CardStyle>
 
