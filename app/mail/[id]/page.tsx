@@ -105,7 +105,8 @@ export default function MailRecommendation() {
     if (fileID) {
       fetchData()
     }
-  }, [fileID, getContent])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileID, getContent]) //NOSONAR
 
   const generateMessage = (
     skillName: string,

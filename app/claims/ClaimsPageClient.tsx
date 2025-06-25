@@ -362,26 +362,24 @@ const ClaimsPageClient: React.FC = () => {
   }
 
   const getAllClaims = useCallback(async (): Promise<any> => {
-    let claimsData: any[] = []
-    const cachedVCs = localStorage.getItem('vcs')
-    if (cachedVCs) {
-      try {
-        const parsedVCs = JSON.parse(cachedVCs)
-        console.log('🚀 ~ getAllClaims ~ parsedVCs:', parsedVCs)
-        if (Array.isArray(parsedVCs) && parsedVCs.length > 0) {
-          console.log('Returning cached VCs from localStorage')
-          claimsData = parsedVCs
-        }
-      } catch (error) {
-        console.error('Error parsing cached VCs from localStorage:', error)
-      }
-    }
-    if (claimsData.length > 0) {
-      return claimsData
-    }
     try {
       const driveFiles = await storage?.getAllFilesByType('VCs')
-      if (!driveFiles?.length) return []
+      if (!driveFiles?.length) {
+        const cachedVCs = localStorage.getItem('vcs')
+        if (cachedVCs) {
+          try {
+            const parsedVCs = JSON.parse(cachedVCs)
+            if (Array.isArray(parsedVCs) && parsedVCs.length > 0) {
+              console.log('No drive files, returning cached VCs from localStorage')
+              return parsedVCs
+            }
+          } catch (error) {
+            console.error('Error parsing cached VCs from localStorage:', error)
+          }
+        }
+        return []
+      }
+
       const vcs = []
       for (const file of driveFiles) {
         try {
@@ -397,13 +395,24 @@ const ClaimsPageClient: React.FC = () => {
           continue
         }
       }
+
+      // Cache the fresh data
       localStorage.setItem('vcs', JSON.stringify(vcs))
       return vcs
     } catch (error) {
       console.error('Error fetching claims from drive:', error)
-      const fallback = localStorage.getItem('vcs')
-      if (fallback) {
-        return JSON.parse(fallback)
+      // Fallback to cache if drive fetch fails
+      const cachedVCs = localStorage.getItem('vcs')
+      if (cachedVCs) {
+        try {
+          const parsedVCs = JSON.parse(cachedVCs)
+          if (Array.isArray(parsedVCs)) {
+            console.log('Drive fetch failed, returning cached VCs from localStorage')
+            return parsedVCs
+          }
+        } catch (cacheError) {
+          console.error('Error parsing cached VCs from localStorage:', cacheError)
+        }
       }
       return []
     }
@@ -411,18 +420,23 @@ const ClaimsPageClient: React.FC = () => {
 
   useEffect(() => {
     const fetchClaims = async () => {
+      if (!storage) {
+        return // Don't fetch if storage is not available yet
+      }
+
       try {
         setLoading(true)
         const claimsData = await getAllClaims()
-        setClaims(claimsData)
-        setLoading(false)
+        setClaims(claimsData || [])
       } catch (error) {
         console.error('Error fetching claims:', error)
+        setClaims([])
+      } finally {
         setLoading(false)
       }
     }
     fetchClaims()
-  }, [getAllClaims])
+  }, [getAllClaims, storage])
 
   useEffect(() => {
     const handleBeforeUnload = () => {
