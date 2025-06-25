@@ -215,7 +215,7 @@ const NavBar = () => {
                 )}
               </Box>
             </Link>
-            <Link href='/fullanalytics' passHref>
+            {/*<Link href='/fullanalytics' passHref>
               <Box
                 sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
               >
@@ -242,7 +242,7 @@ const NavBar = () => {
                   />
                 )}
               </Box>
-            </Link>
+            </Link>*/}
 
             {/* Uncomment these links when needed */}
             {/* 
