@@ -456,7 +456,7 @@ const CredentialTracker: React.FC<TrackerProps> = ({
       if (url === evidence && portfolio.length > 0) {
         const evidenceLinkId = extractDriveFileId(url)
         const matchingItem = portfolio.find(
-          item =>
+          (item: any) =>
             item.googleId === evidenceLinkId ||
             (item.url && extractDriveFileId(item.url) === evidenceLinkId)
         )
