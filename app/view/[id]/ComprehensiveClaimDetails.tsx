@@ -105,8 +105,10 @@ interface ClaimDetail {
 }
 
 interface ComprehensiveClaimDetailsProps {
-  onAchievementLoad?: (achievementName: string) => void
+  onAchievementLoad?: (achievementName: string, credentialType?: string) => void
   fileID?: string
+  vcData?: ClaimDetail
+  showOnlyContent?: boolean
 }
 
 // Helper function to check if text is placeholder
@@ -155,16 +157,6 @@ const extractActualContent = (text: string): string => {
   return ''
 }
 
-// Helper function to clean up field values
-const cleanFieldValue = (value: string | undefined): string => {
-  if (!value || typeof value !== 'string') return ''
-  const cleaned = value
-    .replace(/\s*\(required\):?\s*/gi, '')
-    .replace(/:\s*$/g, '')
-    .trim()
-  return isPlaceholderText(cleaned) ? '' : cleaned
-}
-
 // Helper function to determine VC type
 const getVCType = (
   credential: ClaimDetail
@@ -189,22 +181,19 @@ const getCredentialTitle = (credential: ClaimDetail, vcType: string): string => 
 
   switch (vcType) {
     case 'employment':
-      const empTitle =
-        cleanFieldValue(subject?.credentialName) || cleanFieldValue(subject?.role)
+      const empTitle = subject?.credentialName || subject?.role
       return empTitle || 'Employment Credential'
     case 'volunteering':
-      const volTitle = cleanFieldValue(subject?.volunteerWork)
+      const volTitle = subject?.volunteerWork
       return volTitle || 'Volunteering Credential'
     case 'performance-review':
-      const prTitle = cleanFieldValue(subject?.employeeJobTitle)
+      const prTitle = subject?.employeeJobTitle
       return prTitle ? `Performance Review: ${prTitle}` : 'Performance Review'
     case 'recommendation':
       return 'Recommendation'
     case 'skill':
     default:
-      const skillTitle =
-        cleanFieldValue(subject?.achievement?.[0]?.name) ||
-        cleanFieldValue(subject?.credentialName)
+      const skillTitle = subject?.achievement?.[0]?.name || subject?.credentialName
       return skillTitle || 'Skill Credential'
   }
 }
@@ -212,10 +201,7 @@ const getCredentialTitle = (credential: ClaimDetail, vcType: string): string => 
 // Helper function to get person name
 const getPersonName = (subject: CredentialSubject): string => {
   const name =
-    cleanFieldValue(subject?.fullName) ||
-    cleanFieldValue(subject?.name) ||
-    cleanFieldValue(subject?.persons) ||
-    cleanFieldValue(subject?.employeeName)
+    subject?.fullName || subject?.name || subject?.persons || subject?.employeeName
   return name || 'Unknown Person'
 }
 
@@ -233,7 +219,9 @@ const cleanHTML = (htmlContent: any): string => {
 
 const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
   onAchievementLoad,
-  fileID: propFileID
+  fileID: propFileID,
+  vcData,
+  showOnlyContent = false
 }) => {
   const params = useParams()
   const fileID = propFileID || (params?.id as string)
@@ -291,6 +279,23 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
   }, [fileID])
 
   useEffect(() => {
+    // If VC data is passed directly (e.g., from askforrecommendation page), use it
+    if (vcData) {
+      setClaimDetail(vcData)
+      setLoading(false)
+      // Call onAchievementLoad with achievement name and credential type
+      if (onAchievementLoad) {
+        const achievement = vcData.credentialSubject?.achievement?.[0]
+        const achievementName =
+          achievement?.name ||
+          vcData.credentialSubject?.credentialName ||
+          'Unnamed Achievement'
+        const credentialType = vcData.type?.[1] || 'skill'
+        onAchievementLoad(achievementName, credentialType)
+      }
+      return
+    }
+
     if (!fileID) {
       setErrorMessage('Invalid claim ID.')
       setLoading(false)
@@ -312,11 +317,21 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
       try {
         const accessToken1 = await getAccessToken(fileID)
         const uncachedStorage = new GoogleDriveStorage(accessToken1)
-        let vcData = await getFileViaFirebase(fileID)
-        vcData = JSON.parse(vcData.body)
+        let vcDataFetched = await getFileViaFirebase(fileID)
+        vcDataFetched = JSON.parse(vcDataFetched.body)
 
-        if (vcData) {
-          setClaimDetail(vcData as unknown as ClaimDetail)
+        if (vcDataFetched) {
+          setClaimDetail(vcDataFetched as unknown as ClaimDetail)
+          // Call onAchievementLoad with achievement name and credential type
+          if (onAchievementLoad) {
+            const achievement = vcDataFetched.credentialSubject?.achievement?.[0]
+            const achievementName =
+              achievement?.name ||
+              vcDataFetched.credentialSubject?.credentialName ||
+              'Unnamed Achievement'
+            const credentialType = vcDataFetched.type?.[1] || 'skill'
+            onAchievementLoad(achievementName, credentialType)
+          }
         }
 
         const shouldFetchRecommendations = isView || !!propFileID
@@ -352,7 +367,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
     }
 
     fetchDriveData()
-  }, [accessToken, fileID, status, isView, propFileID])
+  }, [accessToken, fileID, status, isView, propFileID, vcData, onAchievementLoad])
 
   const handleToggleComment = (commentId: string) => {
     setExpandedComments(prevState => ({
@@ -404,33 +419,31 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
               Employment Details
             </Typography>
             <Grid container spacing={2}>
-              {cleanFieldValue(credentialSubject.company) && (
+              {credentialSubject.company && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Company:
                   </Typography>
-                  <Typography>{cleanFieldValue(credentialSubject.company)}</Typography>
+                  <Typography>{credentialSubject.company}</Typography>
                 </Grid>
               )}
-              {cleanFieldValue(credentialSubject.role) && (
+              {credentialSubject.role && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Role:
                   </Typography>
-                  <Typography>{cleanFieldValue(credentialSubject.role)}</Typography>
+                  <Typography>{credentialSubject.role}</Typography>
                 </Grid>
               )}
-              {cleanFieldValue(credentialSubject.credentialDuration) && (
+              {credentialSubject.credentialDuration && (
                 <Grid item xs={12}>
                   <Typography variant='body2' color='text.secondary'>
                     Duration:
                   </Typography>
-                  <Typography>
-                    {cleanFieldValue(credentialSubject.credentialDuration)}
-                  </Typography>
+                  <Typography>{credentialSubject.credentialDuration}</Typography>
                 </Grid>
               )}
-              {cleanFieldValue(credentialSubject.credentialDescription) && (
+              {credentialSubject.credentialDescription && (
                 <Grid item xs={12}>
                   <Typography variant='body2' color='text.secondary'>
                     Description:
@@ -455,27 +468,23 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
               Volunteering Details
             </Typography>
             <Grid container spacing={2}>
-              {cleanFieldValue(credentialSubject.volunteerOrg) && (
+              {credentialSubject.volunteerOrg && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Organization:
                   </Typography>
-                  <Typography>
-                    {cleanFieldValue(credentialSubject.volunteerOrg)}
-                  </Typography>
+                  <Typography>{credentialSubject.volunteerOrg}</Typography>
                 </Grid>
               )}
-              {cleanFieldValue(credentialSubject.volunteerDates) && (
+              {credentialSubject.volunteerDates && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Dates:
                   </Typography>
-                  <Typography>
-                    {cleanFieldValue(credentialSubject.volunteerDates)}
-                  </Typography>
+                  <Typography>{credentialSubject.volunteerDates}</Typography>
                 </Grid>
               )}
-              {cleanFieldValue(credentialSubject.volunteerDescription) && (
+              {credentialSubject.volunteerDescription && (
                 <Grid item xs={12}>
                   <Typography variant='body2' color='text.secondary'>
                     Description:
@@ -512,50 +521,44 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
               Performance Review Details
             </Typography>
             <Grid container spacing={2}>
-              {cleanFieldValue(credentialSubject.employeeName) && (
+              {credentialSubject.employeeName && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Employee Name:
                   </Typography>
-                  <Typography>
-                    {cleanFieldValue(credentialSubject.employeeName)}
-                  </Typography>
+                  <Typography>{credentialSubject.employeeName}</Typography>
                 </Grid>
               )}
-              {cleanFieldValue(credentialSubject.employeeJobTitle) && (
+              {credentialSubject.employeeJobTitle && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Employee Job Title:
                   </Typography>
-                  <Typography>
-                    {cleanFieldValue(credentialSubject.employeeJobTitle)}
-                  </Typography>
+                  <Typography>{credentialSubject.employeeJobTitle}</Typography>
                 </Grid>
               )}
-              {cleanFieldValue(credentialSubject.company) && (
+              {credentialSubject.company && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Company:
                   </Typography>
-                  <Typography>{cleanFieldValue(credentialSubject.company)}</Typography>
+                  <Typography>{credentialSubject.company}</Typography>
                 </Grid>
               )}
-              {cleanFieldValue(credentialSubject.role) && (
+              {credentialSubject.role && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Reviewer Role:
                   </Typography>
-                  <Typography>{cleanFieldValue(credentialSubject.role)}</Typography>
+                  <Typography>{credentialSubject.role}</Typography>
                 </Grid>
               )}
-              {cleanFieldValue(credentialSubject.reviewDuration) && (
+              {credentialSubject.reviewDuration && (
                 <Grid item xs={12} sm={6}>
                   <Typography variant='body2' color='text.secondary'>
                     Review Period:
                   </Typography>
-                  <Typography>
-                    {cleanFieldValue(credentialSubject.reviewDuration)}
-                  </Typography>
+                  <Typography>{credentialSubject.reviewDuration}</Typography>
                 </Grid>
               )}
 
@@ -612,7 +615,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                 </Grid>
               )}
 
-              {cleanFieldValue(credentialSubject.reviewComments) && (
+              {credentialSubject.reviewComments && (
                 <Grid item xs={12}>
                   <Typography variant='body2' color='text.secondary'>
                     Comments:
@@ -627,7 +630,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                 </Grid>
               )}
 
-              {cleanFieldValue(credentialSubject.goalsNext) && (
+              {credentialSubject.goalsNext && (
                 <Grid item xs={12}>
                   <Typography variant='body2' color='text.secondary'>
                     Goals for Next Period:
@@ -650,7 +653,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
         const achievement = credentialSubject?.achievement?.[0]
         return (
           <Box sx={{ mt: 2 }}>
-            {cleanFieldValue(credentialSubject?.credentialDescription) && (
+            {credentialSubject?.credentialDescription && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
                   Description:
@@ -664,7 +667,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                 </Typography>
               </Box>
             )}
-            {achievement?.description && cleanFieldValue(achievement.description) && (
+            {achievement?.description && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
                   How you earned this skill:
@@ -678,23 +681,36 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                 </Typography>
               </Box>
             )}
-            {achievement?.criteria?.narrative &&
-              cleanFieldValue(achievement.criteria.narrative) && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                    What does that entail?:
-                  </Typography>
-                  <ul style={{ marginLeft: '25px', marginTop: '8px' }}>
-                    <li>
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html: cleanHTML(achievement.criteria.narrative)
-                        }}
-                      />
-                    </li>
-                  </ul>
-                </Box>
-              )}
+            {achievement?.criteria?.narrative && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                  What does that entail?:
+                </Typography>
+                <ul style={{ marginLeft: '25px', marginTop: '8px' }}>
+                  <li>
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: cleanHTML(achievement.criteria.narrative)
+                      }}
+                    />
+                  </li>
+                </ul>
+              </Box>
+            )}
+            {credentialSubject?.evidenceDescription && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                  Evidence Description:
+                </Typography>
+                <Typography>
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: cleanHTML(credentialSubject.evidenceDescription)
+                    }}
+                  />
+                </Typography>
+              </Box>
+            )}
           </Box>
         )
     }
@@ -704,7 +720,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
     <Container sx={{ maxWidth: '800px' }}>
       <Box
         sx={{
-          p: isAskForRecommendation ? '5px' : '20px',
+          p: isAskForRecommendation ? '15px' : '20px',
           gap: '20px',
           margin: '20px auto 0',
           border: '1px solid #003FE0',
@@ -712,7 +728,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'flex-start',
-          justifyContent: isAskForRecommendation ? 'center' : 'flex-start',
+          justifyContent: 'flex-start',
           position: 'relative'
         }}
       >
@@ -760,31 +776,6 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
           </Box>
         )}
 
-        {isAskForRecommendation && (
-          <Box
-            sx={{
-              width: credentialSubject?.evidenceLink ? '30%' : '0',
-              marginRight: credentialSubject?.evidenceLink ? '20px' : '15px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              overflow: 'hidden'
-            }}
-          >
-            {credentialSubject?.evidenceLink ? (
-              <EvidencePreview
-                url={credentialSubject.evidenceLink}
-                width={180}
-                height={150}
-              />
-            ) : (
-              <Box
-                sx={{ width: '15px', height: '100px', backgroundColor: 'transparent' }}
-              />
-            )}
-          </Box>
-        )}
-
         <Box sx={{ flex: 1 }}>
           <Box
             sx={{
@@ -824,8 +815,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
             </Typography>
           </Box>
 
-          {(cleanFieldValue(credentialSubject?.duration) ||
-            cleanFieldValue(credentialSubject?.credentialDuration)) && (
+          {(credentialSubject?.duration || credentialSubject?.credentialDuration) && (
             <Box
               sx={{
                 display: 'flex',
@@ -851,13 +841,13 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                   overflowWrap: 'anywhere'
                 }}
               >
-                {cleanFieldValue(credentialSubject?.duration) ||
-                  cleanFieldValue(credentialSubject?.credentialDuration)}
+                {credentialSubject?.duration || credentialSubject?.credentialDuration}
               </Typography>
             </Box>
           )}
 
-          {!isAskForRecommendation && (
+          {/* Show credential content - either for askforrecommendation or regular view */}
+          {(isAskForRecommendation || !isAskForRecommendation) && (
             <>
               {credentialSubject?.evidenceLink && (
                 <Box
@@ -936,7 +926,8 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
 
           {(pathname?.includes('/view') || !!propFileID) &&
             claimDetail &&
-            !isRecommendationsPage && (
+            !isRecommendationsPage &&
+            !isAskForRecommendation && (
               <Box
                 sx={{
                   display: 'flex',
@@ -973,7 +964,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
         </Box>
       </Box>
 
-      {fileID && isMobile && (
+      {fileID && isMobile && !isAskForRecommendation && (
         <Box
           sx={{
             display: 'flex',
@@ -1040,194 +1031,201 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
       )}
 
       {/* Comments Section */}
-      {(isView || !!propFileID) && claimDetail && !isRecommendationsPage && (
-        <Box>
-          {loading ? (
-            <Box display='flex' justifyContent='center' my={2}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : comments && comments.length > 0 ? (
-            <List sx={{ p: 0, mb: 2 }}>
-              {comments.map((comment: ClaimDetail, index: number) => (
-                <React.Fragment key={index}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-end',
-                      pr: '30px'
-                    }}
-                  >
-                    <LineSVG />
-                  </Box>
-                  <ListItem
-                    sx={{ borderRadius: '10px', border: '1px solid #003FE0' }}
-                    alignItems='flex-start'
-                    secondaryAction={
-                      <IconButton
-                        edge='end'
-                        onClick={() =>
-                          handleToggleComment(comment.id || index.toString())
-                        }
-                        aria-label='expand'
-                      >
-                        {expandedComments[comment.id || index.toString()] ? (
-                          <ExpandLess />
-                        ) : (
-                          <ExpandMore />
-                        )}
-                      </IconButton>
-                    }
-                  >
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <SVGBadge />
-                          <Box>
-                            <Typography variant='h6' component='div'>
-                              {getPersonName(comment.credentialSubject)}
-                            </Typography>
-                            <Typography variant='body2' color='text.secondary'>
-                              Vouched for {personName}
-                            </Typography>
-                          </Box>
-                        </Box>
+      {(isView || !!propFileID) &&
+        claimDetail &&
+        !isRecommendationsPage &&
+        !isAskForRecommendation && (
+          <Box>
+            {loading ? (
+              <Box display='flex' justifyContent='center' my={2}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : comments && comments.length > 0 ? (
+              <List sx={{ p: 0, mb: 2 }}>
+                {comments.map((comment: ClaimDetail, index: number) => (
+                  <React.Fragment key={index}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-end',
+                        pr: '30px'
+                      }}
+                    >
+                      <LineSVG />
+                    </Box>
+                    <ListItem
+                      sx={{ borderRadius: '10px', border: '1px solid #003FE0' }}
+                      alignItems='flex-start'
+                      secondaryAction={
+                        <IconButton
+                          edge='end'
+                          onClick={() =>
+                            handleToggleComment(comment.id || index.toString())
+                          }
+                          aria-label='expand'
+                        >
+                          {expandedComments[comment.id || index.toString()] ? (
+                            <ExpandLess />
+                          ) : (
+                            <ExpandMore />
+                          )}
+                        </IconButton>
                       }
-                    />
-                  </ListItem>
-                  <Collapse
-                    in={expandedComments[comment.id || index.toString()]}
-                    timeout='auto'
-                    unmountOnExit
-                  >
-                    <Box sx={{ pl: 7, pr: 2, pb: 2 }}>
-                      {/* How They Know Each Other */}
-                      {comment.credentialSubject?.howKnow && (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant='subtitle2' color='text.secondary'>
-                            How They Know Each Other:
-                          </Typography>
-                          <Typography variant='body2'>
-                            <span
-                              dangerouslySetInnerHTML={{
-                                __html: cleanHTML(comment.credentialSubject.howKnow)
-                              }}
-                            />
-                          </Typography>
-                        </Box>
-                      )}
-                      {/* Recommendation Text */}
-                      {comment.credentialSubject?.recommendationText && (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant='subtitle2' color='text.secondary'>
-                            Recommendation:
-                          </Typography>
-                          <Typography variant='body2'>
-                            <span
-                              dangerouslySetInnerHTML={{
-                                __html: cleanHTML(
-                                  comment.credentialSubject.recommendationText
-                                )
-                              }}
-                            />
-                          </Typography>
-                        </Box>
-                      )}
-                      {/* Your Qualifications */}
-                      {comment.credentialSubject?.qualifications && (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant='subtitle2' color='text.secondary'>
-                            Your Qualifications:
-                          </Typography>
-                          <Typography variant='body2'>
-                            <span
-                              dangerouslySetInnerHTML={{
-                                __html: cleanHTML(
-                                  comment.credentialSubject.qualifications
-                                )
-                              }}
-                            />
-                          </Typography>
-                        </Box>
-                      )}
-                      {/* Explain Your Answer */}
-                      {comment.credentialSubject?.explainAnswer && (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant='subtitle2' color='text.secondary'>
-                            Explain Your Answer:
-                          </Typography>
-                          <Typography variant='body2'>
-                            <span
-                              dangerouslySetInnerHTML={{
-                                __html: cleanHTML(comment.credentialSubject.explainAnswer)
-                              }}
-                            />
-                          </Typography>
-                        </Box>
-                      )}
-                      {/* Supporting Evidence */}
-                      {Array.isArray(comment.credentialSubject?.portfolio) &&
-                        comment.credentialSubject.portfolio.length > 0 && (
+                    >
+                      <ListItemText
+                        primary={
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+                          >
+                            <SVGBadge />
+                            <Box>
+                              <Typography variant='h6' component='div'>
+                                {getPersonName(comment.credentialSubject)}
+                              </Typography>
+                              <Typography variant='body2' color='text.secondary'>
+                                Vouched for {personName}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                    <Collapse
+                      in={expandedComments[comment.id || index.toString()]}
+                      timeout='auto'
+                      unmountOnExit
+                    >
+                      <Box sx={{ pl: 7, pr: 2, pb: 2 }}>
+                        {/* How They Know Each Other */}
+                        {comment.credentialSubject?.howKnow && (
                           <Box sx={{ mt: 1 }}>
                             <Typography variant='subtitle2' color='text.secondary'>
-                              Supporting Evidence:
+                              How They Know Each Other:
                             </Typography>
-                            {comment.credentialSubject.portfolio.map((item, idx) => (
-                              <Box key={`comment-portfolio-${idx}`} sx={{ mt: 1 }}>
-                                {item.name && item.url ? (
-                                  <MuiLink
-                                    href={item.url}
-                                    underline='hover'
-                                    color='primary'
-                                    sx={{
-                                      fontSize: '15px',
-                                      textDecoration: 'underline',
-                                      color: '#003fe0'
-                                    }}
-                                    target='_blank'
-                                  >
-                                    {item.name}
-                                  </MuiLink>
-                                ) : null}
-                              </Box>
-                            ))}
+                            <Typography variant='body2'>
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: cleanHTML(comment.credentialSubject.howKnow)
+                                }}
+                              />
+                            </Typography>
                           </Box>
                         )}
-                    </Box>
-                  </Collapse>
-                  {/* Add Divider between comments */}
-                  {index < comments.length - 1 && <Divider component='li' />}
-                </React.Fragment>
-              ))}
-            </List>
-          ) : (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '10px',
-                mb: '20px'
-              }}
-            >
-              <Typography variant='body2'>No recommendations available.</Typography>
-              <Link href={`/askforrecommendation/${fileID}`}>
-                <Button
-                  variant='contained'
-                  sx={{
-                    backgroundColor: '#003FE0',
-                    textTransform: 'none',
-                    borderRadius: '100px',
-                    width: { xs: 'fit-content', sm: '300px', md: '300px' }
-                  }}
-                >
-                  Ask for Recommendation
-                </Button>
-              </Link>
-            </Box>
-          )}
-        </Box>
-      )}
+                        {/* Recommendation Text */}
+                        {comment.credentialSubject?.recommendationText && (
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant='subtitle2' color='text.secondary'>
+                              Recommendation:
+                            </Typography>
+                            <Typography variant='body2'>
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: cleanHTML(
+                                    comment.credentialSubject.recommendationText
+                                  )
+                                }}
+                              />
+                            </Typography>
+                          </Box>
+                        )}
+                        {/* Your Qualifications */}
+                        {comment.credentialSubject?.qualifications && (
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant='subtitle2' color='text.secondary'>
+                              Your Qualifications:
+                            </Typography>
+                            <Typography variant='body2'>
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: cleanHTML(
+                                    comment.credentialSubject.qualifications
+                                  )
+                                }}
+                              />
+                            </Typography>
+                          </Box>
+                        )}
+                        {/* Explain Your Answer */}
+                        {comment.credentialSubject?.explainAnswer && (
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant='subtitle2' color='text.secondary'>
+                              Explain Your Answer:
+                            </Typography>
+                            <Typography variant='body2'>
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: cleanHTML(
+                                    comment.credentialSubject.explainAnswer
+                                  )
+                                }}
+                              />
+                            </Typography>
+                          </Box>
+                        )}
+                        {/* Supporting Evidence */}
+                        {Array.isArray(comment.credentialSubject?.portfolio) &&
+                          comment.credentialSubject.portfolio.length > 0 && (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant='subtitle2' color='text.secondary'>
+                                Supporting Evidence:
+                              </Typography>
+                              {comment.credentialSubject.portfolio.map((item, idx) => (
+                                <Box key={`comment-portfolio-${idx}`} sx={{ mt: 1 }}>
+                                  {item.name && item.url ? (
+                                    <MuiLink
+                                      href={item.url}
+                                      underline='hover'
+                                      color='primary'
+                                      sx={{
+                                        fontSize: '15px',
+                                        textDecoration: 'underline',
+                                        color: '#003fe0'
+                                      }}
+                                      target='_blank'
+                                    >
+                                      {item.name}
+                                    </MuiLink>
+                                  ) : null}
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                      </Box>
+                    </Collapse>
+                    {/* Add Divider between comments */}
+                    {index < comments.length - 1 && <Divider component='li' />}
+                  </React.Fragment>
+                ))}
+              </List>
+            ) : (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '10px',
+                  mb: '20px'
+                }}
+              >
+                <Typography variant='body2'>No recommendations available.</Typography>
+                <Link href={`/askforrecommendation/${fileID}`}>
+                  <Button
+                    variant='contained'
+                    sx={{
+                      backgroundColor: '#003FE0',
+                      textTransform: 'none',
+                      borderRadius: '100px',
+                      width: { xs: 'fit-content', sm: '300px', md: '300px' }
+                    }}
+                  >
+                    Ask for Recommendation
+                  </Button>
+                </Link>
+              </Box>
+            )}
+          </Box>
+        )}
     </Container>
   )
 }

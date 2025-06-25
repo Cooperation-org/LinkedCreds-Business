@@ -269,7 +269,11 @@ export default function AskForRecommendation() {
               {messageToCopy}
             </Typography>
           </Box>
-          <ComprehensiveClaimDetails onAchievementLoad={handleAchievementLoad} />
+          <ComprehensiveClaimDetails
+            onAchievementLoad={handleAchievementLoad}
+            fileID={fileID}
+            vcData={driveData?.data as any}
+          />
         </Box>
       </Box>
       <Snackbar
