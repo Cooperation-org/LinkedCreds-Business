@@ -138,7 +138,8 @@ const MediaUploadSection: React.FC<Props> = ({
 
   return (
     <Box width='100%'>
-      <CardStyle variant='outlined'>
+      <CardStyle variant='outlined' {...getRootProps()}>
+        <input {...getInputProps()} />
         <FileListDisplay
           files={files}
           onDelete={onDelete}
@@ -149,12 +150,7 @@ const MediaUploadSection: React.FC<Props> = ({
 
         {/* Only show upload area if not hidden */}
         {!hideUpload && (
-          <Box
-            {...getRootProps()}
-            onClick={open}
-            sx={{ textAlign: 'center', cursor: 'pointer' }}
-          >
-            <input {...getInputProps()} />
+          <Box onClick={open} sx={{ textAlign: 'center', cursor: 'pointer' }}>
             <SVGUploadMedia />
             <Typography variant='body1' color='primary'>
               + Add media
