@@ -333,7 +333,16 @@ export function Step2({
                 <Controller
                   name='showDuration'
                   control={control}
-                  render={({ field }) => <Switch {...field} />}
+                  render={({ field }) => (
+                    <Switch
+                      {...field}
+                      onChange={e => {
+                        field.onChange(e)
+                        setValue('duration', '')
+                        setValue('volunteerDates', '')
+                      }}
+                    />
+                  )}
                 />
               }
               label='Show duration instead of exact dates'
@@ -372,14 +381,16 @@ export function Step2({
                       {...field}
                       onChange={e => {
                         field.onChange(e)
-                        const currentValue = watch('volunteerDates') as string
-                        if (e.target.checked) {
-                          setValue('volunteerDates', `${currentValue} -present`)
-                        } else {
-                          setValue(
-                            'volunteerDates',
-                            currentValue.replace(' -present', '')
-                          )
+                        if (!watch('showDuration')) {
+                          const currentValue = watch('volunteerDates') as string
+                          if (e.target.checked) {
+                            setValue('volunteerDates', `${currentValue} -present`)
+                          } else {
+                            setValue(
+                              'volunteerDates',
+                              currentValue.replace(' -present', '')
+                            )
+                          }
                         }
                       }}
                     />
