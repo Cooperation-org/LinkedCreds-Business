@@ -96,14 +96,27 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
 
   const generateLinkedInUrl = () => {
     const baseLinkedInUrl = 'https://www.linkedin.com/profile/add'
+    const credentialName = getCredentialName() || 'Certification Name'
+
+    // Get current date for issue date
+    const currentDate = new Date()
+    const issueYear = currentDate.getFullYear().toString()
+    const issueMonth = (currentDate.getMonth() + 1).toString()
+
+    // Get expiration date (2 years from now)
+    const expirationDate = new Date()
+    expirationDate.setFullYear(currentDate.getFullYear() + 2)
+    const expirationYear = expirationDate.getFullYear().toString()
+    const expirationMonth = (expirationDate.getMonth() + 1).toString()
+
     const params = new URLSearchParams({
       startTask: 'CERTIFICATION_NAME',
-      name: formData?.credentialName ?? 'Certification Name',
+      name: credentialName,
       organizationName: 'LinkedTrust',
-      issueYear: '2024',
-      issueMonth: '8',
-      expirationYear: '2025',
-      expirationMonth: '8',
+      issueYear,
+      issueMonth,
+      expirationYear,
+      expirationMonth,
       certUrl: `https://linked-creds-author-businees-enhancement.vercel.app/view/${fileId}`
     })
     return `${baseLinkedInUrl}?${params.toString()}`
@@ -139,15 +152,36 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
   }
 
   // Helper to get the credential name for all form types
-  const getCredentialName = () => {
+  const getCredentialName = (): string => {
     if (!formData) return ''
-    const value =
-      formData.credentialName ||
-      formData.volunteerWork ||
-      formData.role ||
-      formData.documentType ||
-      ''
-    return typeof value === 'string' ? value : ''
+
+    // Handle performance review credentials
+    if (formData.employeeName && formData.employeeJobTitle) {
+      return `Performance Review: ${String(formData.employeeJobTitle)}`
+    }
+
+    // Handle volunteer credentials
+    if (formData.volunteerWork) {
+      return `Volunteer: ${String(formData.volunteerWork)}`
+    }
+
+    // Handle employment credentials
+    if (formData.role) {
+      return `Employment: ${String(formData.role)}`
+    }
+
+    // Handle general credentials with credentialName
+    if (formData.credentialName) {
+      return String(formData.credentialName)
+    }
+
+    // Handle document type (if any)
+    if (formData.documentType) {
+      return String(formData.documentType)
+    }
+
+    // Fallback
+    return ''
   }
 
   return (

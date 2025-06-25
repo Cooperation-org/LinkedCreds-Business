@@ -45,8 +45,9 @@ export default function MailRecommendation() {
   const [messageToCopy, setMessageToCopy] = useState<string>('')
   const { getContent } = useGoogleDrive()
   const [achievementName, setAchievementName] = useState<string>('')
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
-  const menuOpen = Boolean(menuAnchorEl)
+  // Commented out - not needed for copy-only functionality
+  // const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
+  // const menuOpen = Boolean(menuAnchorEl)
 
   const { reset } = useForm({
     defaultValues: {
@@ -131,6 +132,7 @@ export default function MailRecommendation() {
     setSnackbarOpen(false)
   }
 
+  /* Commented out email handler functions - keeping only copy functionality
   const handleMenuClick = (event: MouseEvent<HTMLButtonElement>) => {
     setMenuAnchorEl(event.currentTarget)
   }
@@ -175,6 +177,7 @@ export default function MailRecommendation() {
     }
     handleMenuClose()
   }
+  */
 
   const copyToClipboard = async () => {
     try {
@@ -183,7 +186,6 @@ export default function MailRecommendation() {
     } catch (err) {
       showNotification('Failed to copy text')
     }
-    handleMenuClose()
   }
 
   if (isLoading) {
@@ -259,13 +261,17 @@ export default function MailRecommendation() {
             fontFamily: 'Lato'
           }}
         >
-          <li style={{ marginBottom: '8px' }}>Use the button below to send an email</li>
           <li style={{ marginBottom: '8px' }}>
-            You can use your default email client or Gmail
+            Use the button below to copy the message
           </li>
-          <li>Alternatively, copy the message and send it manually</li>
+          <li style={{ marginBottom: '8px' }}>
+            Paste it into your preferred email application
+          </li>
+          <li>Send it to the person you want to request a recommendation from</li>
         </ol>
 
+        {/* Commented out email buttons - keeping only copy functionality */}
+        {/*
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <ButtonGroup
             variant='contained'
@@ -336,6 +342,31 @@ export default function MailRecommendation() {
             <ListItemText>Copy</ListItemText>
           </MenuItem>
         </Menu>
+        */}
+
+        {/* Main Copy Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <Button
+            onClick={copyToClipboard}
+            variant='contained'
+            startIcon={<ContentCopyIcon />}
+            sx={{
+              borderRadius: '100px',
+              textTransform: 'lowercase',
+              fontFamily: 'Roboto',
+              color: '#FFFFFF',
+              fontSize: '14px',
+              backgroundColor: '#003FE0',
+              px: 4,
+              py: 1.5,
+              '&:hover': {
+                backgroundColor: '#002bb5'
+              }
+            }}
+          >
+            Copy Message
+          </Button>
+        </Box>
 
         <Box
           sx={{
