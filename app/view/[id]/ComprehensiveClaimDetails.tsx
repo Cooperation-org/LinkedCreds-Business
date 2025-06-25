@@ -697,7 +697,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                 </ul>
               </Box>
             )}
-            {credentialSubject?.evidenceDescription && (
+            {/* {credentialSubject?.evidenceDescription && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
                   Evidence Description:
@@ -710,7 +710,7 @@ const ComprehensiveClaimDetails: React.FC<ComprehensiveClaimDetailsProps> = ({
                   />
                 </Typography>
               </Box>
-            )}
+            )} */}
           </Box>
         )
     }
