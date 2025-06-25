@@ -7,17 +7,17 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
-  Button,
-  ButtonGroup,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText
+  Button
+  // ButtonGroup,
+  // Menu,
+  // MenuItem,
+  // ListItemIcon,
+  // ListItemText
 } from '@mui/material'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'next/navigation'
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
-import EmailIcon from '@mui/icons-material/Email'
+// import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
+// import EmailIcon from '@mui/icons-material/Email'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import useGoogleDrive from '../../hooks/useGoogleDrive'
 import { NewEmail2 } from '../../Assets/SVGs'
@@ -45,7 +45,6 @@ export default function MailRecommendation() {
   const [messageToCopy, setMessageToCopy] = useState<string>('')
   const { getContent } = useGoogleDrive()
   const [achievementName, setAchievementName] = useState<string>('')
-  // Commented out - not needed for copy-only functionality
   // const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
   // const menuOpen = Boolean(menuAnchorEl)
 
@@ -137,31 +136,31 @@ export default function MailRecommendation() {
     setMenuAnchorEl(event.currentTarget)
   }
 
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null)
-  }
+  // const handleMenuClose = () => {
+  //   setMenuAnchorEl(null)
+  // }
 
-  const handleSendMailto = () => {
-    try {
-      const subject = `Support Request: Validation of Expertise`
-      const mailToLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(messageToCopy)}`
-      const mailWindow = window.open(mailToLink, '_blank')
-      if (!mailWindow) {
-        window.location.href = mailToLink
-      }
-      showNotification('Mail client opened.')
-    } catch (err) {
-      console.error('Error opening mail client:', err)
-      showNotification('Failed to open mail client')
-    }
-    handleMenuClose()
-  }
+  // const handleSendMailto = () => {
+  //   try {
+  //     const subject = `Support Request: Validation of Expertise`
+  //     const mailToLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(messageToCopy)}`
+  //     const mailWindow = window.open(mailToLink, '_blank')
+  //     if (!mailWindow) {
+  //       window.location.href = mailToLink
+  //     }
+  //     showNotification('Mail client opened.')
+  //   } catch (err) {
+  //     console.error('Error opening mail client:', err)
+  //     showNotification('Failed to open mail client')
+  //   }
+  //   handleMenuClose()
+  // }
 
-  const handleSendGmail = () => {
-    try {
-      const subject = `Support Request: Validation of Expertise`
-      const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(messageToCopy)}`
-      window.open(gmailLink, '_blank')
+  // const handleSendGmail = () => {
+  //   try {
+  //     const subject = `Support Request: Validation of Expertise`
+  //     const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(messageToCopy)}`
+  //     window.open(gmailLink, '_blank')
 
       navigator.clipboard
         .writeText(messageToCopy)
@@ -273,49 +272,29 @@ export default function MailRecommendation() {
         {/* Commented out email buttons - keeping only copy functionality */}
         {/*
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <ButtonGroup
+          <Button
+            onClick={copyToClipboard}
             variant='contained'
-            sx={{ width: '100%', maxWidth: '400px', boxShadow: 'none' }}
+            startIcon={<ContentCopyIcon />}
+            sx={{
+              borderRadius: '100px',
+              textTransform: 'lowercase',
+              fontFamily: 'Roboto',
+              color: '#FFFFFF',
+              fontSize: '14px',
+              backgroundColor: '#003FE0',
+              width: '100%',
+              maxWidth: '400px',
+              '&:hover': {
+                backgroundColor: '#002bb5'
+              }
+            }}
           >
-            <Button
-              onClick={handleSendMailto}
-              sx={{
-                borderRadius: '100px 0 0 100px',
-                textTransform: 'lowercase',
-                fontFamily: 'Roboto',
-                color: '#FFFFFF',
-                fontSize: '14px',
-                backgroundColor: '#003FE0',
-                flexGrow: 1,
-                '&:hover': {
-                  backgroundColor: '#002bb5'
-                }
-              }}
-            >
-              Send Email
-            </Button>
-            <Button
-              size='small'
-              aria-controls={menuOpen ? 'email-menu' : undefined}
-              aria-haspopup='true'
-              aria-expanded={menuOpen ? 'true' : undefined}
-              onClick={handleMenuClick}
-              sx={{
-                borderRadius: '0 100px 100px 0',
-                backgroundColor: '#003FE0',
-                color: '#fff',
-                '&:hover': {
-                  backgroundColor: '#002bb5'
-                },
-                minWidth: '40px'
-              }}
-            >
-              <ArrowDropDownIcon />
-            </Button>
-          </ButtonGroup>
+            Copy Message
+          </Button>
         </Box>
 
-        <Menu
+        {/* <Menu
           id='email-menu'
           anchorEl={menuAnchorEl}
           open={menuOpen}
