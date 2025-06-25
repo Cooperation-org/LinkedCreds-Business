@@ -117,6 +117,7 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
       issueMonth,
       expirationYear,
       expirationMonth,
+      certId: fileId,
       certUrl: `https://linked-creds-author-businees-enhancement.vercel.app/view/${fileId}`
     })
     return `${baseLinkedInUrl}?${params.toString()}`

@@ -308,6 +308,7 @@ const ClaimsPageClient: React.FC = () => {
       issueMonth,
       expirationYear,
       expirationMonth,
+      certId: claim.id.id,
       certUrl: `https://linked-creds-author-businees-enhancement.vercel.app/view/${claim.id.id}`
     })
     return `${baseLinkedInUrl}?${params.toString()}`
