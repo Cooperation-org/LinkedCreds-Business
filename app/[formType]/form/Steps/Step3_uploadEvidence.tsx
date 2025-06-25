@@ -351,21 +351,17 @@ const FileUploadAndList: React.FC<FileUploadAndListProps & { formType?: string }
             (social media, articles, your website, etc.)
           </Typography>
         </CardStyle>
-        {/* Only show MediaUploadSection if not employment (role) form */}
-        {formType !== 'role' && (
-          <MediaUploadSection
-            files={files}
-            onFilesSelected={handleFilesSelected}
-            onDelete={handleDelete}
-            onNameChange={handleNameChange}
-            onSetAsFeatured={setAsFeatured}
-            onReorder={handleReorder}
-            maxFiles={10}
-            maxSizeMB={20}
-          />
-        )}
+        <MediaUploadSection
+          files={files}
+          onFilesSelected={handleFilesSelected}
+          onDelete={handleDelete}
+          onNameChange={handleNameChange}
+          onSetAsFeatured={setAsFeatured}
+          onReorder={handleReorder}
+          maxFiles={10}
+          maxSizeMB={20}
+        />
       </Box>
-
       <LoadingOverlay text='Uploading files...' open={loading} />
     </Box>
   )
