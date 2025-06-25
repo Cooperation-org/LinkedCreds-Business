@@ -276,11 +276,8 @@ const ClaimsPageClient: React.FC = () => {
 
   const handleEmailShare = (claim: any, e?: React.MouseEvent) => {
     e?.stopPropagation()
-    const credentialName = getCredentialName(claim)
-    const subject = `Check out my ${getCredentialType(claim)}: ${credentialName}`
-    const body = `I wanted to share my verified ${getCredentialType(claim).toLowerCase()} credential with you: ${credentialName}\n\nYou can view it here: ${window.location.origin}/view/${claim.id.id}`
-    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-    window.location.href = mailtoLink
+    const mailPageUrl = `${window.location.origin}/mail/${claim.id.id}`
+    window.location.href = mailPageUrl
   }
   const handleDesktopMenuOpen = (event: React.MouseEvent<HTMLElement>, claim: any) => {
     event.stopPropagation()
@@ -291,14 +288,27 @@ const ClaimsPageClient: React.FC = () => {
   const generateLinkedInUrl = (claim: any) => {
     const baseLinkedInUrl = 'https://www.linkedin.com/profile/add'
     const credentialName = getCredentialName(claim)
+
+    // Get current date for issue date
+    const currentDate = new Date()
+    const issueYear = currentDate.getFullYear().toString()
+    const issueMonth = (currentDate.getMonth() + 1).toString()
+
+    // Get expiration date (2 years from now)
+    const expirationDate = new Date()
+    expirationDate.setFullYear(currentDate.getFullYear() + 2)
+    const expirationYear = expirationDate.getFullYear().toString()
+    const expirationMonth = (expirationDate.getMonth() + 1).toString()
+
     const params = new URLSearchParams({
       startTask: 'CERTIFICATION_NAME',
       name: credentialName,
       organizationName: 'LinkedTrust',
-      issueYear: '2024',
-      issueMonth: '8',
-      expirationYear: '2025',
-      expirationMonth: '8',
+      issueYear,
+      issueMonth,
+      expirationYear,
+      expirationMonth,
+      certId: claim.id.id,
       certUrl: `https://linked-creds-author-businees-enhancement.vercel.app/view/${claim.id.id}`
     })
     return `${baseLinkedInUrl}?${params.toString()}`

@@ -131,9 +131,10 @@ export default function MailRecommendation() {
     setSnackbarOpen(false)
   }
 
-  // const handleMenuClick = (event: MouseEvent<HTMLButtonElement>) => {
-  //   setMenuAnchorEl(event.currentTarget)
-  // }
+  /* Commented out email handler functions - keeping only copy functionality
+  const handleMenuClick = (event: MouseEvent<HTMLButtonElement>) => {
+    setMenuAnchorEl(event.currentTarget)
+  }
 
   // const handleMenuClose = () => {
   //   setMenuAnchorEl(null)
@@ -161,20 +162,21 @@ export default function MailRecommendation() {
   //     const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(messageToCopy)}`
   //     window.open(gmailLink, '_blank')
 
-  //     navigator.clipboard
-  //       .writeText(messageToCopy)
-  //       .then(() => {
-  //         showNotification('Email body copied to clipboard. Ready to paste in Gmail!')
-  //       })
-  //       .catch(err => {
-  //         console.error('Failed to copy text: ', err)
-  //         showNotification('Failed to copy text')
-  //       })
-  //   } catch (err) {
-  //     showNotification('Failed to open Gmail')
-  //   }
-  //   handleMenuClose()
-  // }
+      navigator.clipboard
+        .writeText(messageToCopy)
+        .then(() => {
+          showNotification('Email body copied to clipboard. Ready to paste in Gmail!')
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err)
+          showNotification('Failed to copy text')
+        })
+    } catch (err) {
+      showNotification('Failed to open Gmail')
+    }
+    handleMenuClose()
+  }
+  */
 
   const copyToClipboard = async () => {
     try {
@@ -183,7 +185,6 @@ export default function MailRecommendation() {
     } catch (err) {
       showNotification('Failed to copy text')
     }
-    // handleMenuClose()
   }
 
   if (isLoading) {
@@ -263,11 +264,13 @@ export default function MailRecommendation() {
             Use the button below to copy the message
           </li>
           <li style={{ marginBottom: '8px' }}>
-            Paste the message into your preferred email client
+            Paste it into your preferred email application
           </li>
-          <li>Send the message to your contact to request a recommendation</li>
+          <li>Send it to the person you want to request a recommendation from</li>
         </ol>
 
+        {/* Commented out email buttons - keeping only copy functionality */}
+        {/*
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <Button
             onClick={copyToClipboard}
@@ -317,7 +320,32 @@ export default function MailRecommendation() {
             </ListItemIcon>
             <ListItemText>Copy</ListItemText>
           </MenuItem>
-        </Menu> */}
+        </Menu>
+        */}
+
+        {/* Main Copy Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <Button
+            onClick={copyToClipboard}
+            variant='contained'
+            startIcon={<ContentCopyIcon />}
+            sx={{
+              borderRadius: '100px',
+              textTransform: 'lowercase',
+              fontFamily: 'Roboto',
+              color: '#FFFFFF',
+              fontSize: '14px',
+              backgroundColor: '#003FE0',
+              px: 4,
+              py: 1.5,
+              '&:hover': {
+                backgroundColor: '#002bb5'
+              }
+            }}
+          >
+            Copy Message
+          </Button>
+        </Box>
 
         <Box
           sx={{
