@@ -12,13 +12,32 @@ import ComprehensiveClaimDetails from '../../view/[id]/ComprehensiveClaimDetails
 
 interface DriveData {
   data: {
+    type?: string[]
     credentialSubject: {
-      achievement: {
+      achievement?: {
         name: string
         description: string
         criteria?: { narrative: string }
         image?: { id: string }
       }[]
+      // Employment credentials
+      company?: string
+      role?: string
+      credentialName?: string
+      credentialDuration?: string
+      credentialDescription?: string
+      // Volunteering credentials
+      volunteerOrg?: string
+      volunteerWork?: string
+      volunteerDescription?: string
+      skillsGained?: string[]
+      volunteerDates?: string
+      // Performance review credentials
+      employeeName?: string
+      employeeJobTitle?: string
+      // Common fields
+      fullName?: string
+      name?: string
     }
   }
 }
@@ -54,7 +73,12 @@ export default function AskForRecommendation() {
         const achievement = content?.data?.credentialSubject?.achievement?.[0]
         const name = achievement?.name || 'your skill'
         const credentialType = content?.data?.type?.[1] || 'skill'
-        const baseMessage = generateMessage(name, fileID, credentialType)
+        const baseMessage = generateMessage(
+          name,
+          fileID,
+          credentialType,
+          content?.data?.credentialSubject
+        )
         setMessageToCopy(baseMessage)
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -68,37 +92,54 @@ export default function AskForRecommendation() {
     }
   }, [fileID, getContent])
 
-  const generateMessage = (skillName: string, id: string, credentialType?: string) => {
-    const getCredentialTypeLabel = (type?: string) => {
-      if (!type) return 'expertise'
+  const generateMessage = (
+    skillName: string,
+    id: string,
+    credentialType?: string,
+    credentialSubject?: any
+  ) => {
+    const recommendationUrl = `https://linked-creds-author-businees-enhancement.vercel.app/recommendations/${id}`
 
-      switch (type.toLowerCase()) {
-        case 'employmentcredential':
-        case 'employment':
-        case 'role':
-          return 'employment experience'
-        case 'volunteeringcredential':
-        case 'volunteering':
-        case 'volunteer':
-          return 'volunteer experience'
-        case 'performancereviewcredential':
-        case 'performance-review':
-        case 'performancereview':
-          return 'performance review'
-        case 'skill':
-        default:
-          return 'expertise'
-      }
+    // Get additional context from credential data if available
+    const actualCredentialSubject =
+      credentialSubject || driveData?.data?.credentialSubject
+    const company = actualCredentialSubject?.company || '[Insert Company Name]'
+    const organization =
+      actualCredentialSubject?.volunteerOrg ||
+      '[organization to which you volunteered your time]'
+
+    switch (credentialType?.toLowerCase()) {
+      case 'employmentcredential':
+      case 'employment':
+      case 'role':
+        return `[Insert Supervisor's name] Below you'll find the link to my employment credential stating I work at ${company} as described. This credential is intended to accurately represent my current position and affirms I'm employee in good standing at ${company}. I appreciate confirmation of my employment through your endorsement of my employment credential.\n\n${recommendationUrl}`
+
+      case 'volunteeringcredential':
+      case 'volunteering':
+      case 'volunteer':
+        return `[Supervisor's name]: the link below describes my recent volunteer work for ${organization}. I would appreciate your acknowledgement of and support for my efforts working with this group. I found it [rewarding/enjoyable.etc in your words] and sought to represent our company in positive and professional manner. I look forward to your affirmation of my volunteering work.\n\n${recommendationUrl}`
+
+      case 'performancereviewcredential':
+      case 'performance-review':
+      case 'performancereview':
+        return `[supervisor's name]: Please review my performance review draft found in the URL below. I look forward to your comments, critiques, and suggestions. Based on your feedback I'll review my PR and with your input. If you think a second version is appropriate, I'll generate a new PR for your consideration. Thank you for making the time to review my work. I look forward to your response.\n\n${recommendationUrl}`
+
+      case 'skill':
+      default:
+        // Keep original message for skills and other types
+        return `Hey there! I hope you're doing well. I am writing to ask if you would consider supporting me by providing validation of my expertise in ${skillName}. If you're comfortable, could you please take a moment to write a brief reference highlighting your observations of my capabilities and how they have contributed to the work we have done together? It would mean a lot to me!\n\n${recommendationUrl}`
     }
-
-    const credentialLabel = getCredentialTypeLabel(credentialType)
-    return `Hey there! I hope you're doing well. I am writing to ask if you would consider supporting me by providing validation of my ${credentialLabel} in ${skillName}. If you're comfortable, could you please take a moment to write a brief reference highlighting your observations of my capabilities and how they have contributed to the work we have done together? It would mean a lot to me!\n\nthis is the link https://linked-creds-author-businees-enhancement.vercel.app/recommendations/${id}`
   }
 
   const handleAchievementLoad = (name: string, credentialType?: string) => {
     if (name && name !== achievementName) {
       setAchievementName(name)
-      const updatedMessage = generateMessage(name, fileID, credentialType)
+      const updatedMessage = generateMessage(
+        name,
+        fileID,
+        credentialType,
+        driveData?.data?.credentialSubject
+      )
       setMessageToCopy(updatedMessage)
       reset({
         reference: updatedMessage
