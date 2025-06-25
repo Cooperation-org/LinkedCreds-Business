@@ -3,6 +3,36 @@ import { Box, Typography, Paper, styled, Card, CardContent } from '@mui/material
 import { usePathname } from 'next/navigation'
 import { Logo, SVGBadgeCheck } from '../../Assets/SVGs'
 import Image from 'next/image'
+import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist'
+import { useSession } from 'next-auth/react'
+
+GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
+
+const isPDF = (fileName: string) => fileName.toLowerCase().endsWith('.pdf')
+const isMP4 = (fileName: string) => fileName.toLowerCase().endsWith('.mp4')
+const isGoogleDriveImageUrl = (url: string): boolean => {
+  return /https:\/\/drive\.google\.com\/uc\?export=view&id=.+/.test(url)
+}
+
+const isPDFFromPortfolio = (evidenceLink: string, portfolio: any[]): boolean => {
+  if (!evidenceLink || !portfolio || portfolio.length === 0) return false
+
+  const evidenceLinkId = extractDriveFileId(evidenceLink)
+  if (!evidenceLinkId) return isPDF(evidenceLink)
+
+  const matchingPortfolioItem = portfolio.find(
+    item =>
+      item.googleId === evidenceLinkId ||
+      (item.url && extractDriveFileId(item.url) === evidenceLinkId)
+  )
+
+  if (matchingPortfolioItem && matchingPortfolioItem.name) {
+    console.log('DEBUG: Found matching portfolio item:', matchingPortfolioItem)
+    return isPDF(matchingPortfolioItem.name)
+  }
+
+  return isPDF(evidenceLink)
+}
 
 const Header = styled(Paper)({
   width: '100%',
@@ -199,12 +229,81 @@ const cfg: Record<string, CFG> = {
   }
 }
 
+const extractDriveFileId = (url: string): string | undefined => {
+  const matchIdParam = /[?&]id=([^&]+)/.exec(url)
+  if (matchIdParam) return matchIdParam[1]
+  const matchFilePath = /\/file\/d\/([^/]+)/.exec(url)
+  if (matchFilePath) return matchFilePath[1]
+  return undefined
+}
+
+const renderPDFThumbnail = async (fileUrl: string, accessToken?: string) => {
+  console.log('DEBUG: renderPDFThumbnail called with:', {
+    fileUrl,
+    accessToken: !!accessToken
+  })
+  try {
+    const fileId = extractDriveFileId(fileUrl)
+    console.log('DEBUG: extracted fileId:', fileId)
+    if (fileId && accessToken) {
+      console.log('DEBUG: Using API proxy for Google Drive file')
+      const resp = await fetch(
+        `/api/pdf-proxy?fileId=${fileId}&access_token=${accessToken}`
+      )
+      console.log('DEBUG: API proxy response status:', resp.status)
+      if (resp.ok) {
+        const pdfData = await resp.arrayBuffer()
+        const loadingTask = getDocument({ data: pdfData })
+        const pdf = await loadingTask.promise
+        const page = await pdf.getPage(1)
+        const viewport = page.getViewport({ scale: 1 })
+        const scale = Math.min(160 / viewport.width, 153 / viewport.height)
+        const scaledViewport = page.getViewport({ scale })
+        const canvas = document.createElement('canvas')
+        canvas.width = scaledViewport.width
+        canvas.height = scaledViewport.height
+        const context = canvas.getContext('2d')
+        if (context) {
+          await page.render({ canvasContext: context, viewport: scaledViewport }).promise
+          console.log('DEBUG: PDF thumbnail generated successfully via API proxy')
+          return canvas.toDataURL()
+        }
+      } else {
+        console.log('DEBUG: API proxy failed, response not ok')
+      }
+    } else {
+      console.log('DEBUG: No fileId or accessToken, skipping API proxy')
+    }
+
+    console.log('DEBUG: Falling back to direct URL method')
+    const loadingTask = getDocument(fileUrl)
+    const pdf = await loadingTask.promise
+    const page = await pdf.getPage(1)
+    const viewport = page.getViewport({ scale: 0.1 })
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    if (context) {
+      canvas.height = viewport.height
+      canvas.width = viewport.width
+      await page.render({ canvasContext: context, viewport }).promise
+      console.log('DEBUG: PDF thumbnail generated successfully via direct URL')
+      return canvas.toDataURL()
+    }
+  } catch (error) {
+    console.error('Error rendering PDF thumbnail:', error)
+  }
+  console.log('DEBUG: Returning fallback thumbnail')
+  return '/fallback-pdf-thumbnail.svg'
+}
+
 const CredentialTracker: React.FC<TrackerProps> = ({
   formData,
   hideHeader,
   activeStep
 }) => {
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
+  const { data: session } = useSession()
+  const accessToken = session?.accessToken
   const credentialTypeMap: Record<string, string> = {
     skill: 'Skill',
     'performance-review': 'Performance Review',
@@ -216,6 +315,7 @@ const CredentialTracker: React.FC<TrackerProps> = ({
   const conf = cfg[segment] || cfg.skill
   const [timeAgo, setTimeAgo] = useState('just now')
   const [lastChange, setLastChange] = useState(Date.now())
+  const [pdfThumbnails, setPdfThumbnails] = useState<Record<string, string>>({})
   const mainTitle =
     formData?.credentialName ||
     (segment === 'performance-review' ? 'Performance Review' : 'Credential Preview')
@@ -250,6 +350,35 @@ const CredentialTracker: React.FC<TrackerProps> = ({
     setLastChange(Date.now())
     setTimeAgo('just now')
   }, [formData])
+
+  useEffect(() => {
+    const generateThumbnailsForEvidenceLink = async () => {
+      const evidenceLink = formData?.evidenceLink
+      const isEvidencePDF = isPDFFromPortfolio(
+        evidenceLink || '',
+        formData?.portfolio || []
+      )
+      if (evidenceLink && isEvidencePDF && !pdfThumbnails[evidenceLink]) {
+        console.log('DEBUG: Generating thumbnail for evidenceLink PDF')
+        const thumbnail = await renderPDFThumbnail(evidenceLink, accessToken)
+        setPdfThumbnails(prev => ({ ...prev, [evidenceLink]: thumbnail }))
+      }
+    }
+
+    const generateThumbnailsForPortfolio = async () => {
+      if (formData?.portfolio && Array.isArray(formData.portfolio)) {
+        for (const file of formData.portfolio) {
+          if (file.url && isPDF(file.url) && !pdfThumbnails[file.url]) {
+            const thumbnail = await renderPDFThumbnail(file.url, accessToken)
+            setPdfThumbnails(prev => ({ ...prev, [file.url]: thumbnail }))
+          }
+        }
+      }
+    }
+
+    generateThumbnailsForEvidenceLink()
+    generateThumbnailsForPortfolio()
+  }, [formData?.evidenceLink, formData?.portfolio, pdfThumbnails, accessToken])
 
   const renderVolunteerDates = () => {
     if (segment !== 'volunteer') return null
@@ -323,18 +452,36 @@ const CredentialTracker: React.FC<TrackerProps> = ({
 
     if (!hasUrls) return null
 
-    const shouldDisplayUrl = (url: string): boolean => {
-      return !url.includes('drive.google.com/uc?export=view')
+    const getDisplayName = (url: string, portfolioItem?: any): string => {
+      if (url === evidence && portfolio.length > 0) {
+        const evidenceLinkId = extractDriveFileId(url)
+        const matchingItem = portfolio.find(
+          item =>
+            item.googleId === evidenceLinkId ||
+            (item.url && extractDriveFileId(item.url) === evidenceLinkId)
+        )
+        if (matchingItem && matchingItem.name) {
+          return matchingItem.name
+        }
+      }
+
+      if (portfolioItem && portfolioItem.name && portfolioItem.name.trim()) {
+        return portfolioItem.name
+      }
+
+      const isFilePDF = isPDFFromPortfolio(url, portfolio)
+      if (isFilePDF) {
+        return 'PDF Document'
+      }
+
+      return url
     }
-    const linkText =
-      (formData.supportingDocs && formData.supportingDocs.trim()) || evidence // ← shows URL until a title is provided
-    const name = portfolio.length > 0 ? portfolio[0].name : ''
 
     return (
       <Box sx={{ mb: 2.5 }}>
         <Label>Supporting Documentation</Label>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
-          {evidence && shouldDisplayUrl(evidence) && (
+          {evidence && (
             <li style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}>
               <a
                 href={evidence}
@@ -342,13 +489,14 @@ const CredentialTracker: React.FC<TrackerProps> = ({
                 rel='noopener noreferrer'
                 style={{ color: '#6b7280' }}
               >
-                {(formData.supportingDocs && formData.supportingDocs.trim()) || evidence}
+                {(formData.supportingDocs && formData.supportingDocs.trim()) ||
+                  getDisplayName(evidence)}
               </a>
             </li>
           )}
 
           {portfolio.map((file: any, i: number) =>
-            file.url && shouldDisplayUrl(file.url) ? (
+            file.url && file.url !== evidence ? (
               <li
                 key={i}
                 style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}
@@ -359,7 +507,7 @@ const CredentialTracker: React.FC<TrackerProps> = ({
                   rel='noopener noreferrer'
                   style={{ color: '#6b7280' }}
                 >
-                  {(file.name && file.name.trim()) || file.url}
+                  {getDisplayName(file.url, file)}
                 </a>
               </li>
             ) : null
@@ -371,12 +519,18 @@ const CredentialTracker: React.FC<TrackerProps> = ({
 
   const renderMedia = () => {
     if (formData?.evidenceLink) {
+      const evidenceLink = formData.evidenceLink
+      const isEvidencePDF = isPDFFromPortfolio(evidenceLink, formData?.portfolio || [])
+      const thumbnailSrc = isEvidencePDF
+        ? pdfThumbnails[evidenceLink] || '/fallback-pdf-thumbnail.svg'
+        : evidenceLink
+
       return (
         <Box sx={{ textAlign: 'center', mb: 2.5 }}>
           <Media sx={{ display: 'inline-block' }}>
             <Image
-              src={formData.evidenceLink}
-              alt='Featured Media'
+              src={thumbnailSrc}
+              alt={isEvidencePDF ? 'PDF Document Preview' : 'Featured Media'}
               width={160}
               height={153}
               style={{
@@ -385,6 +539,18 @@ const CredentialTracker: React.FC<TrackerProps> = ({
               }}
             />
           </Media>
+          <Typography
+            sx={{
+              fontFamily: 'Inter',
+              fontSize: '16px',
+              fontWeight: 500,
+              color: '#6b7280',
+              mt: 1,
+              textAlign: 'center'
+            }}
+          >
+            {isEvidencePDF ? 'PDF Document' : 'Featured Media'}
+          </Typography>
         </Box>
       )
     } else {

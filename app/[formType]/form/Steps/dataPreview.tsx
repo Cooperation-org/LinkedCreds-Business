@@ -13,12 +13,39 @@ import {
 import { StepTrackShape } from '../fromTexts & stepTrack/StepTrackShape'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
+import { useSession } from 'next-auth/react'
 
 GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
 const isPDF = (fileName: string) => fileName.toLowerCase().endsWith('.pdf')
 const isMP4 = (fileName: string) => fileName.toLowerCase().endsWith('.mp4')
 const isGoogleDriveImageUrl = (url: string): boolean => {
   return /https:\/\/drive\.google\.com\/uc\?export=view&id=.+/.test(url)
+}
+
+// Enhanced PDF detection for Google Drive URLs using portfolio data
+const isPDFFromPortfolio = (evidenceLink: string, portfolio: any[]): boolean => {
+  if (!evidenceLink || !portfolio || portfolio.length === 0) return false
+
+  // Extract file ID from evidenceLink
+  const evidenceLinkId = extractDriveFileId(evidenceLink)
+  if (!evidenceLinkId) return isPDF(evidenceLink) // Fallback to URL-based detection
+
+  // Find matching portfolio item by Google ID
+  const matchingPortfolioItem = portfolio.find(
+    item =>
+      item.googleId === evidenceLinkId ||
+      (item.url && extractDriveFileId(item.url) === evidenceLinkId)
+  )
+
+  if (matchingPortfolioItem && matchingPortfolioItem.name) {
+    console.log(
+      'DEBUG DataPreview: Found matching portfolio item:',
+      matchingPortfolioItem
+    )
+    return isPDF(matchingPortfolioItem.name)
+  }
+
+  return isPDF(evidenceLink) // Fallback
 }
 
 const cleanHTML = (htmlContent: string) => {
@@ -55,6 +82,7 @@ interface FormData {
   portfolio?: Array<{
     name: string
     url: string
+    googleId?: string
   }>
 }
 
@@ -93,8 +121,44 @@ const Media = styled(Box)({
   margin: '0 auto'
 })
 
-const renderPDFThumbnail = async (fileUrl: string) => {
+// Helper function to extract Google Drive file ID
+const extractDriveFileId = (url: string): string | undefined => {
+  const matchIdParam = /[?&]id=([^&]+)/.exec(url)
+  if (matchIdParam) return matchIdParam[1]
+  const matchFilePath = /\/file\/d\/([^/]+)/.exec(url)
+  if (matchFilePath) return matchFilePath[1]
+  return undefined
+}
+
+const renderPDFThumbnail = async (fileUrl: string, accessToken?: string) => {
   try {
+    // Check if it's a Google Drive URL and we have access token
+    const fileId = extractDriveFileId(fileUrl)
+    if (fileId && accessToken) {
+      // Use API proxy for Google Drive files
+      const resp = await fetch(
+        `/api/pdf-proxy?fileId=${fileId}&access_token=${accessToken}`
+      )
+      if (resp.ok) {
+        const pdfData = await resp.arrayBuffer()
+        const loadingTask = getDocument({ data: pdfData })
+        const pdf = await loadingTask.promise
+        const page = await pdf.getPage(1)
+        const viewport = page.getViewport({ scale: 1 })
+        const scale = Math.min(160 / viewport.width, 153 / viewport.height)
+        const scaledViewport = page.getViewport({ scale })
+        const canvas = document.createElement('canvas')
+        canvas.width = scaledViewport.width
+        canvas.height = scaledViewport.height
+        const context = canvas.getContext('2d')
+        if (context) {
+          await page.render({ canvasContext: context, viewport: scaledViewport }).promise
+          return canvas.toDataURL()
+        }
+      }
+    }
+
+    // Fallback to direct URL (for non-Google Drive URLs)
     const loadingTask = getDocument(fileUrl)
     const pdf = await loadingTask.promise
     const page = await pdf.getPage(1)
@@ -152,14 +216,17 @@ const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) =>
   const theme: Theme = useTheme()
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('sm'))
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
+  const { data: session } = useSession()
+  const accessToken = session?.accessToken
 
   const [pdfThumbnails, setPdfThumbnails] = useState<Record<string, string>>({})
   const [videoThumbnails, setVideoThumbnails] = useState<Record<string, string>>({})
 
   useEffect(() => {
+    // Generate thumbnails for selected files
     selectedFiles.forEach(async file => {
       if (isPDF(file.name) && !pdfThumbnails[file.id]) {
-        const thumbnail = await renderPDFThumbnail(file.url)
+        const thumbnail = await renderPDFThumbnail(file.url, accessToken)
         setPdfThumbnails(prev => ({ ...prev, [file.id]: thumbnail }))
       }
 
@@ -176,7 +243,23 @@ const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) =>
         }
       }
     })
-  }, [selectedFiles, pdfThumbnails, videoThumbnails])
+
+    // Generate thumbnail for evidenceLink if it's a PDF
+    const generateEvidenceLinkThumbnail = async () => {
+      const evidenceLink = formData?.evidenceLink
+      const isEvidencePDF = isPDFFromPortfolio(
+        evidenceLink || '',
+        formData?.portfolio || []
+      )
+      if (evidenceLink && isEvidencePDF && !pdfThumbnails[evidenceLink]) {
+        console.log('DEBUG DataPreview: Generating thumbnail for evidenceLink PDF')
+        const thumbnail = await renderPDFThumbnail(evidenceLink, accessToken)
+        setPdfThumbnails(prev => ({ ...prev, [evidenceLink]: thumbnail }))
+      }
+    }
+
+    generateEvidenceLinkThumbnail()
+  }, [selectedFiles, pdfThumbnails, videoThumbnails, formData?.evidenceLink, accessToken])
 
   const handleNavigate = (url: string, target: string = '_self') => {
     window.open(url, target)
@@ -367,12 +450,18 @@ const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) =>
       )
     }
 
+    const evidenceLink = formData.evidenceLink
+    const isEvidencePDF = isPDFFromPortfolio(evidenceLink, formData?.portfolio || [])
+    const thumbnailSrc = isEvidencePDF
+      ? pdfThumbnails[evidenceLink] || '/fallback-pdf-thumbnail.svg'
+      : evidenceLink
+
     return (
       <Box>
         <Media>
           <Image
-            src={formData.evidenceLink}
-            alt='Featured Media'
+            src={thumbnailSrc}
+            alt={isEvidencePDF ? 'PDF Document Preview' : 'Featured Media'}
             width={160}
             height={153}
             style={{
@@ -391,7 +480,7 @@ const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) =>
             textAlign: 'center'
           }}
         >
-          Featured Media
+          {isEvidencePDF ? 'PDF Document' : 'Featured Media'}
         </Typography>
       </Box>
     )
@@ -406,11 +495,40 @@ const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) =>
 
     if (!hasUrls) return null
 
+    // Helper function to get the display name for a file
+    const getDisplayName = (url: string, portfolioItem?: any): string => {
+      // If it's the evidenceLink, find the matching portfolio item
+      if (url === evidence && portfolio.length > 0) {
+        const evidenceLinkId = extractDriveFileId(url)
+        const matchingItem = portfolio.find(
+          (item: any) =>
+            item.googleId === evidenceLinkId ||
+            (item.url && extractDriveFileId(item.url) === evidenceLinkId)
+        )
+        if (matchingItem && matchingItem.name) {
+          return matchingItem.name
+        }
+      }
+
+      // If we have a portfolio item with a name, use it
+      if (portfolioItem && portfolioItem.name && portfolioItem.name.trim()) {
+        return portfolioItem.name
+      }
+
+      // Check if it's a PDF using enhanced detection
+      const isFilePDF = isPDFFromPortfolio(url, portfolio)
+      if (isFilePDF) {
+        return 'PDF Document'
+      }
+
+      return url
+    }
+
     return (
       <Box sx={{ mb: 2.5 }}>
         <Label>Supporting Documentation</Label>
         <ul style={{ margin: 0, paddingLeft: '18px' }}>
-          {evidence && shouldDisplayUrl(evidence) && (
+          {evidence && (
             <li style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}>
               <a
                 href={evidence}
@@ -418,15 +536,14 @@ const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) =>
                 rel='noopener noreferrer'
                 style={{ color: '#6b7280' }}
               >
-                {formData.supportingDocs || evidence}
+                {formData.supportingDocs || getDisplayName(evidence)}
               </a>
             </li>
           )}
           {portfolio.map(
             (file: { name: string; url: string }, index: number) =>
-              file.name &&
               file.url &&
-              shouldDisplayUrl(file.url) && (
+              file.url !== evidence && (
                 <li
                   key={index}
                   style={{ color: '#6b7280', fontFamily: 'Inter', fontSize: '16px' }}
@@ -437,7 +554,7 @@ const DataPreview: React.FC<DataPreviewProps> = ({ formData, selectedFiles }) =>
                     rel='noopener noreferrer'
                     style={{ color: '#6b7280' }}
                   >
-                    {file.name || file.url}
+                    {getDisplayName(file.url, file)}
                   </a>
                 </li>
               )
