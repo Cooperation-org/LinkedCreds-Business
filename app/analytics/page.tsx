@@ -10,7 +10,8 @@ import {
   LinearProgress,
   Card,
   CardContent,
-  styled
+  styled,
+  Tooltip
 } from '@mui/material'
 import {
   getUserAnalytics
@@ -57,6 +58,15 @@ const StyledCard = styled(Card)(({ theme }) => ({
 
 const StyledMetricCard = styled(StyledCard)({
   minHeight: '100px'
+})
+
+const StyledDisabledCard = styled(StyledCard)({
+  minHeight: '100px',
+  opacity: 0.5,
+  cursor: 'not-allowed',
+  '&:hover': {
+    opacity: 0.5
+  }
 })
 
 const StyledCardContent = styled(CardContent)({
@@ -252,14 +262,18 @@ export default function Main() {
                 </StyledMetricCard>
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
-                <StyledMetricCard>
-                  <StyledCardContent>
-                    <StyledMetricTitle>ID Verification</StyledMetricTitle>
-                    <StyledMetricValue>
-                      {analyticsData.credentialsIssued.idVerification}
-                    </StyledMetricValue>
-                  </StyledCardContent>
-                </StyledMetricCard>
+                <Tooltip title='Under Development </>' arrow>
+                  <Box>
+                    <StyledDisabledCard>
+                      <StyledCardContent>
+                        <StyledMetricTitle>ID Verification</StyledMetricTitle>
+                        <StyledMetricValue>
+                          {analyticsData.credentialsIssued.idVerification}
+                        </StyledMetricValue>
+                      </StyledCardContent>
+                    </StyledDisabledCard>
+                  </Box>
+                </Tooltip>
               </Grid>
             </Grid>
           </Box>
