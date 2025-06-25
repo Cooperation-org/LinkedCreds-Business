@@ -304,18 +304,16 @@ const FileUploadAndList: React.FC<FileUploadAndListProps> = ({
         </CardStyle>
 
         {/* Add Media Section */}
-        <Box width='100%'>
-          <MediaUploadSection
-            files={files}
-            onFilesSelected={handleFilesSelected}
-            onDelete={handleDelete}
-            onNameChange={handleNameChange}
-            onSetAsFeatured={setAsFeatured}
-            onReorder={handleReorder}
-            maxFiles={10}
-            maxSizeMB={20}
-          />
-        </Box>
+        <MediaUploadSection
+          files={files}
+          onFilesSelected={handleFilesSelected}
+          onDelete={handleDelete}
+          onNameChange={handleNameChange}
+          onSetAsFeatured={setAsFeatured}
+          onReorder={handleReorder}
+          maxFiles={10}
+          maxSizeMB={20}
+        />
       </Box>
 
       <LoadingOverlay text='Uploading files...' open={loading} />
