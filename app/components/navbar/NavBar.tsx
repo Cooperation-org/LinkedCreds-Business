@@ -215,6 +215,34 @@ const NavBar = () => {
                 )}
               </Box>
             </Link>
+            <Link href='/fullanalytics' passHref>
+              <Box
+                sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '16px',
+                    fontWeight: isActive('/fullanalytics') ? '600' : '400',
+                    color: isActive('/fullanalytics')
+                      ? '#003FE0'
+                      : theme.palette.t3DarkSlateBlue,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Global Analytics
+                </Typography>
+                {isActive('/fullanalytics') && (
+                  <Box
+                    sx={{
+                      height: '2px',
+                      width: '100%',
+                      mt: '5px',
+                      backgroundColor: '#003FE0'
+                    }}
+                  />
+                )}
+              </Box>
+            </Link>
 
             {/* Uncomment these links when needed */}
             {/* 

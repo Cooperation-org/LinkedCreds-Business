@@ -435,3 +435,188 @@ export const updateEvidenceAttachmentRates = async (
 }
 
 export { db, auth } // Still export db and auth for other potential consumers, but they are now imported
+
+// Function to get global analytics for all users
+export const getGlobalAnalytics = async () => {
+  try {
+    const { collection, getDocs } = await import('firebase/firestore')
+    const usersCollection = collection(db, 'users')
+    const querySnapshot = await getDocs(usersCollection)
+
+    let totalUsers = 0
+    let activeUsers = 0
+    const globalData = {
+      totalUsers: 0,
+      activeUsers: 0,
+      credentialsIssued: {
+        skill: 0,
+        employment: 0,
+        performanceReview: 0,
+        volunteer: 0,
+        idVerification: 0
+      },
+      clickRates: {
+        requestRecommendation: 0,
+        shareCredential: 0
+      },
+      evidenceAttachmentRates: {
+        skillVCs: 0,
+        employmentVCs: 0,
+        volunteerVCs: 0,
+        performanceReviews: 0
+      }
+    }
+
+    const now = new Date()
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    querySnapshot.forEach(doc => {
+      const data = doc.data() as UserAnalyticsData
+      totalUsers++
+
+      // Check if user is active (had activity in last 30 days)
+      const lastActivity = data.lastActivity ? new Date(data.lastActivity) : null
+      if (lastActivity && lastActivity > thirtyDaysAgo) {
+        activeUsers++
+      }
+
+      // Aggregate credentials issued
+      if (data.credentialsIssued) {
+        globalData.credentialsIssued.skill += data.credentialsIssued.skill || 0
+        globalData.credentialsIssued.employment += data.credentialsIssued.employment || 0
+        globalData.credentialsIssued.performanceReview +=
+          data.credentialsIssued.performanceReview || 0
+        globalData.credentialsIssued.volunteer += data.credentialsIssued.volunteer || 0
+        globalData.credentialsIssued.idVerification +=
+          data.credentialsIssued.idVerification || 0
+      }
+
+      // Aggregate click rates
+      if (data.clickRates) {
+        globalData.clickRates.requestRecommendation +=
+          data.clickRates.requestRecommendation || 0
+        globalData.clickRates.shareCredential += data.clickRates.shareCredential || 0
+      }
+
+      // Aggregate evidence attachment rates
+      if (data.evidenceAttachmentRates) {
+        globalData.evidenceAttachmentRates.skillVCs +=
+          data.evidenceAttachmentRates.skillVCs || 0
+        globalData.evidenceAttachmentRates.employmentVCs +=
+          data.evidenceAttachmentRates.employmentVCs || 0
+        globalData.evidenceAttachmentRates.volunteerVCs +=
+          data.evidenceAttachmentRates.volunteerVCs || 0
+        globalData.evidenceAttachmentRates.performanceReviews +=
+          data.evidenceAttachmentRates.performanceReviews || 0
+      }
+    })
+
+    globalData.totalUsers = totalUsers
+    globalData.activeUsers = activeUsers
+
+    return globalData
+  } catch (error) {
+    console.error('Error fetching global analytics:', error)
+    return null
+  }
+}
+
+// Interface for exported user data
+export interface ExportUserData {
+  email: string
+  lastActivity: string | null
+  isActive: boolean
+  skillCredentials: number
+  employmentCredentials: number
+  performanceReviewCredentials: number
+  volunteerCredentials: number
+  idVerificationCredentials: number
+  totalCredentials: number
+  requestRecommendationClicks: number
+  shareCredentialClicks: number
+  totalClicks: number
+  skillVCsEvidence: number
+  employmentVCsEvidence: number
+  volunteerVCsEvidence: number
+  performanceReviewsEvidence: number
+  totalEvidenceAttachments: number
+}
+
+// Function to get all users' individual data for export
+export const getAllUsersAnalyticsData = async (): Promise<ExportUserData[] | null> => {
+  try {
+    const { collection, getDocs } = await import('firebase/firestore')
+    const usersCollection = collection(db, 'users')
+    const querySnapshot = await getDocs(usersCollection)
+
+    const usersData: ExportUserData[] = []
+    const now = new Date()
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    querySnapshot.forEach(doc => {
+      const data = doc.data() as UserAnalyticsData
+
+      // Process the lastActivity date
+      let lastActivityDate = null
+      let isActive = false
+
+      if (data.lastActivity) {
+        if (typeof data.lastActivity === 'string') {
+          lastActivityDate = data.lastActivity
+          isActive = new Date(data.lastActivity) > thirtyDaysAgo
+        } else if (
+          data.lastActivity &&
+          typeof (data.lastActivity as any).toDate === 'function'
+        ) {
+          lastActivityDate = (data.lastActivity as any).toDate().toISOString()
+          isActive = (data.lastActivity as any).toDate() > thirtyDaysAgo
+        }
+      }
+
+      // Create a flattened structure for Excel export
+      const userData = {
+        email: data.email || '',
+        lastActivity: lastActivityDate || '',
+        isActive: isActive,
+
+        // Credentials issued
+        skillCredentials: data.credentialsIssued?.skill || 0,
+        employmentCredentials: data.credentialsIssued?.employment || 0,
+        performanceReviewCredentials: data.credentialsIssued?.performanceReview || 0,
+        volunteerCredentials: data.credentialsIssued?.volunteer || 0,
+        idVerificationCredentials: data.credentialsIssued?.idVerification || 0,
+        totalCredentials:
+          (data.credentialsIssued?.skill || 0) +
+          (data.credentialsIssued?.employment || 0) +
+          (data.credentialsIssued?.performanceReview || 0) +
+          (data.credentialsIssued?.volunteer || 0) +
+          (data.credentialsIssued?.idVerification || 0),
+
+        // Click rates
+        requestRecommendationClicks: data.clickRates?.requestRecommendation || 0,
+        shareCredentialClicks: data.clickRates?.shareCredential || 0,
+        totalClicks:
+          (data.clickRates?.requestRecommendation || 0) +
+          (data.clickRates?.shareCredential || 0),
+
+        // Evidence attachment rates
+        skillVCsEvidence: data.evidenceAttachmentRates?.skillVCs || 0,
+        employmentVCsEvidence: data.evidenceAttachmentRates?.employmentVCs || 0,
+        volunteerVCsEvidence: data.evidenceAttachmentRates?.volunteerVCs || 0,
+        performanceReviewsEvidence: data.evidenceAttachmentRates?.performanceReviews || 0,
+        totalEvidenceAttachments:
+          (data.evidenceAttachmentRates?.skillVCs || 0) +
+          (data.evidenceAttachmentRates?.employmentVCs || 0) +
+          (data.evidenceAttachmentRates?.volunteerVCs || 0) +
+          (data.evidenceAttachmentRates?.performanceReviews || 0)
+      }
+
+      usersData.push(userData as ExportUserData)
+    })
+
+    return usersData
+  } catch (error) {
+    console.error('Error fetching all users analytics data:', error)
+    return null
+  }
+}
