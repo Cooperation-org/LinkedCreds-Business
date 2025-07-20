@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { FormControl, Box, Slide } from '@mui/material'
 import { FormData } from './types/Types'
@@ -43,6 +43,7 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
   const [fileId, setFileId] = useState('')
   const [selectedFiles, setSelectedFiles] = useState<any[]>([])
   const [res, setRes] = useState<any>(null)
+  const hasProcessedImport = useRef(false)
 
   const { data: session } = useSession()
   const accessToken = session?.accessToken as string | undefined
@@ -124,8 +125,31 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
     }
   }
 
+  // Get initial values with imported data if available
+  const getInitialValues = (formType: string): Partial<FormData> => {
+    let defaultValues = getDefaultValues(formType)
+
+    // Check for imported form data
+    const importedData = localStorage.getItem('importedFormData')
+    if (importedData) {
+      try {
+        const parsedImportedData = JSON.parse(importedData)
+        console.log('Found imported form data during initialization:', parsedImportedData)
+
+        // Merge imported data with default values
+        defaultValues = { ...defaultValues, ...parsedImportedData }
+
+        console.log('Initial merged form data:', defaultValues)
+      } catch (error) {
+        console.error('Error parsing imported form data during initialization:', error)
+      }
+    }
+
+    return defaultValues
+  }
+
   const methods = useForm<FormData>({
-    defaultValues: getDefaultValues(formType),
+    defaultValues: getInitialValues(formType),
     mode: 'onChange',
     reValidateMode: 'onChange'
   })
@@ -139,13 +163,23 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
       } else {
         setActiveStep(0)
       }
-      const defaultValues = getDefaultValues(formType)
-      console.log('Setting default values for', formType, ':', defaultValues)
-      localStorage.removeItem('formData')
 
-      methods.reset(defaultValues)
+      // Clean up imported data after successful initialization
+      const importedData = localStorage.getItem('importedFormData')
+      if (importedData && !hasProcessedImport.current) {
+        console.log('Cleaning up imported data from localStorage')
+        localStorage.removeItem('importedFormData')
+        hasProcessedImport.current = true
+      }
+
+      localStorage.removeItem('formData')
     }
-  }, [formType, setActiveStep, methods, accessToken])
+  }, [formType, setActiveStep, accessToken])
+
+  // Reset the import flag when formType changes
+  useEffect(() => {
+    hasProcessedImport.current = false
+  }, [formType])
 
   useEffect(() => {
     setPrevStep(activeStep + 1)
