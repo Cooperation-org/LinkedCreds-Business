@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import HamburgerMenu from '../hamburgerMenu/HamburgerMenu'
 import { Logo } from '../../Assets/SVGs'
@@ -19,6 +19,7 @@ import { Logo } from '../../Assets/SVGs'
 const NavBar = () => {
   const theme = useTheme()
   const pathname = usePathname()
+  const router = useRouter()
   const { data: session } = useSession()
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
@@ -32,10 +33,18 @@ const NavBar = () => {
     setAnchorEl(null)
   }
 
-  const handleSignOut = () => {
-    signOut()
-    localStorage.clear()
-    handleClose()
+  const handleSignOut = async () => {
+    try {
+      await signOut({ redirect: false })
+      localStorage.clear()
+      handleClose()
+      router.push('/')
+    } catch (error) {
+      console.error('Sign out error:', error)
+      localStorage.clear()
+      handleClose()
+      router.push('/')
+    }
   }
 
   const isActive = (path: string): boolean => pathname === path

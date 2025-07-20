@@ -486,6 +486,14 @@ const ClaimsPageClient: React.FC = () => {
 
   useEffect(() => {
     const fetchClaims = async () => {
+      // Check if user is authenticated
+      if (!session || !accessToken) {
+        console.log('No session or access token available. User not authenticated.')
+        setLoading(false)
+        setClaims([])
+        return
+      }
+
       if (!storage) {
         return // Don't fetch if storage is not available yet
       }
@@ -510,7 +518,7 @@ const ClaimsPageClient: React.FC = () => {
       }
     }
     fetchClaims()
-  }, [getAllClaims, storage])
+  }, [getAllClaims, storage, session, accessToken])
 
   useEffect(() => {
     const handleBeforeUnload = () => {
