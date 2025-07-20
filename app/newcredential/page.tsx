@@ -31,7 +31,6 @@ const CredentialCard = ({
   icon,
   description,
   secondaryLabel,
-  isSelected,
   isDisabled,
   onClick
 }: {
@@ -39,7 +38,6 @@ const CredentialCard = ({
   icon: React.ReactNode
   description: string
   secondaryLabel?: string
-  isSelected: boolean
   isDisabled: boolean
   onClick: () => void
 }) => {
@@ -62,7 +60,7 @@ const CredentialCard = ({
         maxWidth: '440px',
         padding: '30px 20px',
         background: '#ffffff',
-        border: isSelected ? '2px solid #2563eb' : '1px solid #2563EB',
+        border: '1px solid #2563EB',
         borderRadius: '8px',
         mb: isMobile ? 2 : 0,
         cursor: isDisabled ? 'not-allowed' : 'pointer',
@@ -131,16 +129,11 @@ const CredentialCard = ({
 
 export default function NewCredentialPage() {
   const [disabledCredentials] = useState<CredentialType[]>(['identityVerification'])
-  const [selectedCredential, setSelectedCredential] = useState<CredentialType>(null)
   const router = useRouter()
 
   const handleSelectCredential = (credentialType: CredentialType) => {
     if (disabledCredentials.includes(credentialType)) return
-    setSelectedCredential(credentialType)
-  }
 
-  const handleContinue = () => {
-    if (!selectedCredential) return
     const routes: Record<string, string> = {
       employment: '/role',
       volunteering: '/volunteer',
@@ -148,7 +141,10 @@ export default function NewCredentialPage() {
       skill: '/skill',
       identityVerification: '/identity-verification'
     }
-    router.push(routes[selectedCredential])
+
+    if (credentialType && routes[credentialType]) {
+      router.push(routes[credentialType])
+    }
   }
 
   const credentialOptions: CredentialOption[] = [
@@ -208,7 +204,6 @@ export default function NewCredentialPage() {
               icon={option.icon}
               description={option.description}
               secondaryLabel={option.secondaryLabel}
-              isSelected={selectedCredential === option.type}
               isDisabled={disabledCredentials.includes(option.type)}
               onClick={() => handleSelectCredential(option.type)}
             />
@@ -268,42 +263,6 @@ export default function NewCredentialPage() {
       </Box>
       <Box sx={{ width: '100%', mt: { xs: 4, md: '5vh' }, mb: { xs: 4, md: '5vh' } }}>
         {renderDesktopLayout()}
-      </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          width: '100vw',
-          mt: 'auto',
-          mb: '-76px',
-          padding: '20px',
-          borderTop: '1px solid #E5E7EB',
-          backgroundColor: '#fff',
-          boxShadow: '4px -4px 10px 2px rgba(20, 86, 255, 0.25)',
-          position: 'relative'
-        }}
-      >
-        <Button
-          variant='contained'
-          disabled={!selectedCredential}
-          onClick={handleContinue}
-          sx={{
-            backgroundColor: '#003FE0',
-            borderRadius: '50px',
-            padding: '8px 24px',
-            textTransform: 'none',
-            height: { xs: '40px', md: '66px' },
-            width: { xs: '100%', md: '136px' },
-            fontWeight: 700,
-            '&:hover': { backgroundColor: '#003FE0' },
-            '&.Mui-disabled': { backgroundColor: '#B5B5B5', color: '#2E2E48' },
-            fontFamily: 'Nunito Sans',
-            fontSize: '18px'
-          }}
-        >
-          Continue
-        </Button>
       </Box>
     </Box>
   )
