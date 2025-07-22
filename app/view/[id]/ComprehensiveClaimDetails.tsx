@@ -50,6 +50,7 @@ interface CredentialSubject {
   name?: string
   fullName?: string
   persons?: string
+  credentialType?: string  // Added for external credential detection
 
   // Achievement-based (legacy skill credentials)
   achievement?: Achievement[]
