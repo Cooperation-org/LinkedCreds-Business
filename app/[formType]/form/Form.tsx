@@ -369,8 +369,9 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
         sx={{
           m: { xs: '50px auto', md: '120px auto' },
           display: 'flex',
-          gap: '90px',
-          alignItems: 'flex-start',
+          flexDirection: { xs: 'column', md: 'row' }, // responsive stacking
+          gap: { xs: '30px', md: '90px' }, // responsive gap
+          alignItems: { xs: 'center', md: 'flex-start' }, // responsive alignment
           justifyContent: 'center',
           p: { xs: '0 20px', md: '0' }
         }}
@@ -612,12 +613,17 @@ const Form: React.FC<FormProps> = ({ onStepChange, formType }) => {
         </Box>
         {(() => {
           const previewStep = isPerformanceReview ? 5 : 4
-          if (
-            activeStep >= 1 &&
-            activeStep !== previewStep &&
-            activeStep < (isPerformanceReview ? 6 : 5)
-          ) {
-            return <CredentialTracker formData={formValues} hideHeader={false} />
+          const successStep = isPerformanceReview ? 6 : 5
+          if (activeStep >= 1 && activeStep !== previewStep && activeStep < successStep) {
+            return (
+              <CredentialTracker
+                formData={formValues}
+                hideHeader={false}
+                activeStep={activeStep}
+                previewStep={previewStep}
+                successStep={successStep}
+              />
+            )
           }
           return null
         })()}

@@ -154,6 +154,8 @@ interface TrackerProps {
   formData?: Record<string, any>
   hideHeader?: boolean
   activeStep?: number
+  previewStep?: number
+  successStep?: number
 }
 
 type F = {
@@ -299,7 +301,9 @@ const renderPDFThumbnail = async (fileUrl: string, accessToken?: string) => {
 const CredentialTracker: React.FC<TrackerProps> = ({
   formData,
   hideHeader,
-  activeStep
+  activeStep,
+  previewStep,
+  successStep
 }) => {
   const segment = usePathname()?.split('/').filter(Boolean).pop() ?? 'skill'
   const { data: session } = useSession()
@@ -750,16 +754,20 @@ const CredentialTracker: React.FC<TrackerProps> = ({
     )
   }
 
+  // Determine previewStep and successStep for responsive display logic
+  const defaultPreviewStep = segment === 'performance-review' ? 5 : 4
+  const defaultSuccessStep = segment === 'performance-review' ? 6 : 5
+  const _previewStep = typeof previewStep === 'number' ? previewStep : defaultPreviewStep
+
+  const isPreviewStep = typeof activeStep === 'number' && activeStep === _previewStep
+
   return (
     <Box
       sx={{
         p: 0,
         width: '100%',
-        maxWidth: '720px',
-        display: {
-          xs: activeStep === 4 || segment === 'performance-review' ? 'block' : 'none',
-          md: 'block'
-        }
+        maxWidth: '720px'
+        // display: isPreviewStep ? 'block' : 'none'
       }}
     >
       <Box
