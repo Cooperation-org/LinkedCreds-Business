@@ -677,7 +677,7 @@ const ClaimsPageClient: React.FC = () => {
                             }}
                             onClick={e => {
                               e.stopPropagation()
-                              window.open(`${window.location.origin}/view/${claim.id.id}`)
+                              router.push(`/view/${claim.id.id}`)
                             }}
                           >
                             {getCredentialName(claim)}
@@ -698,9 +698,7 @@ const ClaimsPageClient: React.FC = () => {
                               }}
                               onClick={e => {
                                 e.stopPropagation()
-                                window.open(
-                                  `${window.location.origin}/view/${claim.id.id}`
-                                )
+                                router.push(`/view/${claim.id.id}`)
                               }}
                             >
                               {getCredentialName(claim)}
