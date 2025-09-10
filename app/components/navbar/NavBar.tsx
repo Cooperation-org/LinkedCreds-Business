@@ -97,7 +97,7 @@ const NavBar = () => {
       {/* Navigation Links and Sign Button */}
       <Box
         sx={{
-          width: '55%',
+          width: '65%',
           display: { xs: 'none', md: 'flex' },
           alignItems: 'center',
           justifyContent: session ? 'space-between' : 'flex-end',
@@ -213,6 +213,32 @@ const NavBar = () => {
                   Analytics
                 </Typography>
                 {isActive('/analytics') && (
+                  <Box
+                    sx={{
+                      height: '2px',
+                      width: '100%',
+                      mt: '5px',
+                      backgroundColor: '#003FE0'
+                    }}
+                  />
+                )}
+              </Box>
+            </Link>
+            <Link href='/help' passHref>
+              <Box
+                sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '16px',
+                    fontWeight: isActive('/help') ? '600' : '400',
+                    color: isActive('/help') ? '#003FE0' : theme.palette.t3DarkSlateBlue,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Help
+                </Typography>
+                {isActive('/help') && (
                   <Box
                     sx={{
                       height: '2px',

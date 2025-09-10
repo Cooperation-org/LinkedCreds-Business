@@ -6,7 +6,7 @@ import Card from './components/cards'
 interface SectionProps {
   theme: Theme //NOSONAR
 }
-// Four-card “fan” showcasing every credential type except identity-verification
+// Four-card "fan" showcasing every credential type except identity-verification
 // Order them left-to-right by using slight rotations (−6°, −2°, +2°, +6°)
 
 const EXAMPLE_CARDS = [
@@ -103,7 +103,7 @@ const STEPS = [
     title: '1. Describe your employees contributions',
     icon: '/Document.svg',
     description:
-      'Add your employees’ skills and experiences, from volunteering, special projects, or employee job performance advancing your business.'
+      "Add your employees' skills and experiences, from volunteering, special projects, or employee job performance advancing your business."
   },
   {
     id: 'validate',
@@ -211,28 +211,57 @@ const HeroSection: React.FC<SectionProps & { showCards: boolean }> = ({ showCard
           )}
         </Typography>
 
-        <Link href='/newcredential' passHref>
-          <Button
-            variant='contained'
-            sx={{
-              backgroundColor: theme.palette.t3ButtonBlue,
-              color: '#FFFFFF',
-              width: '220px',
-              maxHeight: { xs: '40px', md: '52px' },
-              borderRadius: '100px',
-              py: '22px',
-              px: '20px',
-              textTransform: 'none',
-              fontSize: '16px',
-              fontFamily: 'Roboto',
-              lineHeight: '20px',
-              fontWeight: '500',
-              mb: { xs: '19px', md: 0 }
-            }}
-          >
-            Build your credential
-          </Button>
-        </Link>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, alignItems: { xs: 'center', md: 'flex-start' } }}>
+          <Link href='/newcredential' passHref>
+            <Button
+              variant='contained'
+              sx={{
+                backgroundColor: theme.palette.t3ButtonBlue,
+                color: '#FFFFFF',
+                width: '220px',
+                maxHeight: { xs: '40px', md: '52px' },
+                borderRadius: '100px',
+                py: '22px',
+                px: '20px',
+                textTransform: 'none',
+                fontSize: '16px',
+                fontFamily: 'Roboto',
+                lineHeight: '20px',
+                fontWeight: '500',
+                mb: { xs: '19px', md: 0 }
+              }}
+            >
+              Build your credential
+            </Button>
+          </Link>
+          <Link href='/help' passHref>
+            <Button
+              variant='outlined'
+              sx={{
+                borderColor: theme.palette.t3ButtonBlue,
+                color: theme.palette.t3ButtonBlue,
+                width: '220px',
+                maxHeight: { xs: '40px', md: '52px' },
+                borderRadius: '100px',
+                py: '22px',
+                px: '20px',
+                textTransform: 'none',
+                fontSize: '16px',
+                fontFamily: 'Roboto',
+                lineHeight: '20px',
+                fontWeight: '500',
+                mb: { xs: '19px', md: 0 },
+                '&:hover': {
+                  borderColor: theme.palette.t3ButtonBlue,
+                  backgroundColor: theme.palette.t3ButtonBlue,
+                  color: '#FFFFFF'
+                }
+              }}
+            >
+              Get Help & Instructions
+            </Button>
+          </Link>
+        </Box>
       </Box>
 
       {showCards && (
@@ -419,30 +448,61 @@ const StepsSection: React.FC<SectionProps> = ({ theme }) => (
         </Box>
       ))}
     </Box>
-    <Link href='/newcredential' passHref>
-      <Button
-        variant='contained'
-        sx={{
-          backgroundColor: theme.palette.t3ButtonBlue,
-          color: '#FFFFFF',
-          fontFamily: 'Roboto',
-          borderRadius: '100px',
-          py: 1.5,
-          px: 4,
-          textTransform: 'none',
-          fontSize: '16px',
-          lineHeight: '20px',
-          mx: 'auto',
-          display: { xs: 'block', md: 'none' },
-          mb: '30px',
-          width: { xs: '100%', md: 'auto' },
-          maxWidth: '360px',
-          fontWeight: 500
-        }}
-      >
-        Start building your first skill
-      </Button>
-    </Link>
+    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, justifyContent: 'center', alignItems: 'center', mt: 3 }}>
+      <Link href='/newcredential' passHref>
+        <Button
+          variant='contained'
+          sx={{
+            backgroundColor: theme.palette.t3ButtonBlue,
+            color: '#FFFFFF',
+            fontFamily: 'Roboto',
+            borderRadius: '100px',
+            py: 1.5,
+            px: 4,
+            textTransform: 'none',
+            fontSize: '16px',
+            lineHeight: '20px',
+            mx: 'auto',
+            display: { xs: 'block', md: 'none' },
+            mb: '30px',
+            width: { xs: '100%', md: 'auto' },
+            maxWidth: '360px',
+            fontWeight: 500
+          }}
+        >
+          Start building your first skill
+        </Button>
+      </Link>
+      <Link href='/help' passHref>
+        <Button
+          variant='outlined'
+          sx={{
+            borderColor: theme.palette.t3ButtonBlue,
+            color: theme.palette.t3ButtonBlue,
+            fontFamily: 'Roboto',
+            borderRadius: '100px',
+            py: 1.5,
+            px: 4,
+            textTransform: 'none',
+            fontSize: '16px',
+            lineHeight: '20px',
+            mx: 'auto',
+            display: { xs: 'block', md: 'none' },
+            mb: '30px',
+            width: { xs: '100%', md: 'auto' },
+            maxWidth: '360px',
+            fontWeight: 500,
+            '&:hover': {
+              borderColor: theme.palette.t3ButtonBlue,
+              backgroundColor: theme.palette.t3ButtonBlue,
+              color: '#FFFFFF'
+            }
+          }}
+        >
+          Get Help & Instructions
+        </Button>
+      </Link>
+    </Box>
   </Box>
 )
 

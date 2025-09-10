@@ -73,6 +73,20 @@ const EmailIcon = () => (
   />
 )
 
+const HelpIcon = () => (
+  <Box
+    sx={{
+      width: '44px',
+      height: '44px',
+      backgroundImage: 'url(/icons/footer/help.svg)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+      backgroundSize: 'cover',
+      flexShrink: 0
+    }}
+  />
+)
+
 const Footer: React.FC = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -140,6 +154,11 @@ const Footer: React.FC = () => {
               href='/privacy'
             />
             <FooterItem
+              icon={<HelpIcon />}
+              text='Help & Instructions'
+              href='/help'
+            />
+            <FooterItem
               icon={<EmailIcon />}
               text='lc.business-support@allskillscount.org'
               href='mailto:lc.business-support@allskillscount.org'
@@ -177,6 +196,11 @@ const Footer: React.FC = () => {
                 icon={<PrivacyPolicyIcon />}
                 text='Privacy Policy'
                 href='/privacy'
+              />
+              <FooterItem
+                icon={<HelpIcon />}
+                text='Help & Instructions'
+                href='/help'
               />
             </Box>
             <Box
@@ -234,6 +258,11 @@ const Footer: React.FC = () => {
               icon={<PrivacyPolicyIcon />}
               text='Privacy Policy'
               href='/privacy'
+            />
+            <FooterItem
+              icon={<HelpIcon />}
+              text='Help & Instructions'
+              href='/help'
             />
             <FooterItem
               icon={<EmailIcon />}

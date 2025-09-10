@@ -236,6 +236,51 @@ const HamburgerMenu = () => {
                     <ArrowForwardIosIcon fontSize='small' />
                   </Box>
                 </Link>
+                <Link href='/help' passHref style={{ width: '100%' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      width: '100%'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start'
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: '16px',
+                          fontWeight: isActive('/help') ? '600' : '400',
+                          color: isActive('/help') ? '#003FE0' : 'inherit',
+                          cursor: 'pointer',
+                          display: 'inline-block',
+                          position: 'relative',
+                          height: '22px'
+                        }}
+                      >
+                        Help & Instructions
+                        {isActive('/help') && (
+                          <Box
+                            sx={{
+                              height: '2px',
+                              width: '100%',
+                              position: 'absolute',
+                              bottom: 0,
+                              left: 0,
+                              backgroundColor: '#003FE0'
+                            }}
+                          />
+                        )}
+                      </Typography>
+                    </Box>
+                    <ArrowForwardIosIcon fontSize='small' />
+                  </Box>
+                </Link>
                 <Link href='/fullanalytics' passHref style={{ width: '100%' }}>
                   <Box
                     sx={{
@@ -385,6 +430,22 @@ const HamburgerMenu = () => {
               >
                 <Typography sx={{ fontWeight: 400, fontSize: '16px', height: '22px' }}>
                   About LinkedCreds - Business
+                </Typography>
+                <ArrowForwardIosIcon fontSize='small' />
+              </Box>
+            </Link>
+            <Link href='/help' passHref>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  width: '100%',
+                  height: '22px'
+                }}
+              >
+                <Typography sx={{ fontWeight: 400, fontSize: '16px', height: '22px' }}>
+                  Help & Instructions
                 </Typography>
                 <ArrowForwardIosIcon fontSize='small' />
               </Box>
