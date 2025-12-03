@@ -62,8 +62,16 @@ test.describe('Recommendation Creation', () => {
       return;
     }
     
+    // Wait for page to be fully interactive
+    await page.waitForLoadState('domcontentloaded');
+    
     const googleDriveButton = page.getByRole('button', { name: /login.*google.*drive/i });
     const continueWithoutSaving = page.getByRole('button', { name: /continue without saving/i });
+    
+    // Wait for at least one button to appear
+    await expect(
+      googleDriveButton.or(continueWithoutSaving).first()
+    ).toBeVisible({ timeout: 10000 });
     
     // Either button should be visible
     const hasGoogleButton = await googleDriveButton.isVisible().catch(() => false);
@@ -266,6 +274,9 @@ test.describe('Ask for Recommendation', () => {
   test('ask for recommendation page loads', async ({ page }) => {
     await expect(page).toHaveURL(/.*askforrecommendation.*/);
     
+    // Wait for page to be fully loaded and interactive
+    await page.waitForLoadState('domcontentloaded');
+    
     // Check for key elements or error state
     const title = page.getByText(/recommendations/i);
     const copyButton = page.getByRole('button', { name: /copy/i });
@@ -273,6 +284,11 @@ test.describe('Ask for Recommendation', () => {
     const errorMessage = page.getByRole('heading', { name: /failed/i }).or(
       page.getByText(/failed.*fetch|error/i)
     );
+    
+    // Wait for at least one element to appear
+    await expect(
+      title.or(copyButton).or(messageText).or(errorMessage).first()
+    ).toBeVisible({ timeout: 10000 });
     
     const hasTitle = await title.isVisible().catch(() => false);
     const hasCopyButton = await copyButton.isVisible().catch(() => false);
@@ -299,12 +315,18 @@ test.describe('Ask for Recommendation', () => {
   });
 
   test('displays recommendation request message', async ({ page }) => {
+    // Wait for page to be fully loaded
+    await page.waitForLoadState('domcontentloaded');
+    
     // Check for error state first (expected with invalid ID)
     const hasError = await isErrorState(page);
     if (hasError) {
       // Test skipped - page is in error state due to invalid ID
       return;
     }
+    
+    // Wait for main content area to be present
+    await page.locator('main').first().waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
     
     // Check for message content - scope to main content area to avoid matching footer/navbar
     // Use more specific text pattern unique to the recommendation message
@@ -313,12 +335,18 @@ test.describe('Ask for Recommendation', () => {
   });
 
   test('shows steps for requesting recommendation', async ({ page }) => {
+    // Wait for page to be fully loaded
+    await page.waitForLoadState('domcontentloaded');
+    
     // Check for error state first (expected with invalid ID)
     const hasError = await isErrorState(page);
     if (hasError) {
       // Test skipped - page is in error state due to invalid ID
       return;
     }
+    
+    // Wait for main content area to be present
+    await page.locator('main').first().waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
     
     // Check for step instructions - scope to main content area and use specific heading text
     const stepsText = page.locator('main').getByText(/follow these steps/i).first();

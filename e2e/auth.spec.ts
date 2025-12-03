@@ -77,6 +77,9 @@ test.describe('Authentication', () => {
     // Try to access a protected route like /claims
     await page.goto('/claims');
     
+    // Wait for page to be fully loaded
+    await page.waitForLoadState('domcontentloaded');
+    
     // Should either:
     // 1. Redirect to sign in
     // 2. Show sign in prompt
@@ -85,10 +88,16 @@ test.describe('Authentication', () => {
     const signInPrompt = page.getByText(/sign in|login|connect.*google/i).or(
       page.getByRole('button', { name: /sign in|login/i })
     ).first();
+    const emptyState = page.getByText(/no credentials|get started/i);
+    
+    // Wait for at least one element to appear
+    await expect(
+      signInPrompt.or(emptyState).first()
+    ).toBeVisible({ timeout: 10000 });
     
     // One of these should be present
     const hasSignInPrompt = await signInPrompt.isVisible().catch(() => false);
-    const hasEmptyState = await page.getByText(/no credentials|get started/i).isVisible().catch(() => false);
+    const hasEmptyState = await emptyState.isVisible().catch(() => false);
     
     expect(hasSignInPrompt || hasEmptyState).toBeTruthy();
   });

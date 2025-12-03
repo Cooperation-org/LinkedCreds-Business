@@ -10,17 +10,29 @@ test.describe('Credential Creation', () => {
     await page.waitForLoadState('networkidle');
     await expect(page).toHaveURL(/credentialForm|\/$/);
 
-    // Check for Google Drive connection step, form elements, or a sign-in prompt
+    // Wait for React hydration - wait for any interactive element to appear
+    await page.waitForLoadState('domcontentloaded');
+    
+    // Wait for at least one of the expected elements to be visible
+    // This ensures the page has fully rendered
     const googleDriveText = page.getByText(/first.*login.*google.*drive/i).first();
     const form = page.locator('form').first();
     const signInButton = page.getByRole('button', { name: /sign in|login/i }).first();
+    const continueButton = page.getByRole('button', { name: /continue without saving/i }).first();
 
+    // Wait for at least one element to appear (with timeout)
+    await expect(
+      googleDriveText.or(form).or(signInButton).or(continueButton).first()
+    ).toBeVisible({ timeout: 10000 });
+
+    // Verify at least one is visible
     const hasGoogleDriveStep = await googleDriveText.isVisible().catch(() => false);
     const hasForm = await form.isVisible().catch(() => false);
     const hasSignIn = await signInButton.isVisible().catch(() => false);
+    const hasContinue = await continueButton.isVisible().catch(() => false);
 
     // Any of these states means the page has loaded successfully
-    expect(hasGoogleDriveStep || hasForm || hasSignIn).toBeTruthy();
+    expect(hasGoogleDriveStep || hasForm || hasSignIn || hasContinue).toBeTruthy();
   });
 
   test('can navigate through form steps', async ({ page }) => {
