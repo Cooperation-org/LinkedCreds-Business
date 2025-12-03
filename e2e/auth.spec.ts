@@ -85,20 +85,16 @@ test.describe('Authentication', () => {
     // 2. Show sign in prompt
     // 3. Show empty state with sign in option
     
-    const signInPrompt = page.getByText(/sign in|login|connect.*google/i).or(
-      page.getByRole('button', { name: /sign in|login/i })
-    ).first();
-    const emptyState = page.getByText(/no credentials|get started/i);
+    const signInText = page.getByText(/sign in|login|connect.*google/i).first();
+    const signInButton = page.getByRole('button', { name: /sign in|login/i }).first();
+    const emptyState = page.getByText(/no credentials|get started/i).first();
     
-    // Wait for at least one element to appear
-    await expect(
-      signInPrompt.or(emptyState).first()
-    ).toBeVisible({ timeout: 10000 });
+    // Check each element individually with timeout
+    const hasSignInText = await signInText.isVisible({ timeout: 10000 }).catch(() => false);
+    const hasSignInButton = await signInButton.isVisible({ timeout: 10000 }).catch(() => false);
+    const hasEmptyState = await emptyState.isVisible({ timeout: 10000 }).catch(() => false);
     
     // One of these should be present
-    const hasSignInPrompt = await signInPrompt.isVisible().catch(() => false);
-    const hasEmptyState = await emptyState.isVisible().catch(() => false);
-    
-    expect(hasSignInPrompt || hasEmptyState).toBeTruthy();
+    expect(hasSignInText || hasSignInButton || hasEmptyState).toBeTruthy();
   });
 });

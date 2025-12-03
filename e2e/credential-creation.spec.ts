@@ -20,16 +20,11 @@ test.describe('Credential Creation', () => {
     const signInButton = page.getByRole('button', { name: /sign in|login/i }).first();
     const continueButton = page.getByRole('button', { name: /continue without saving/i }).first();
 
-    // Wait for at least one element to appear (with timeout)
-    await expect(
-      googleDriveText.or(form).or(signInButton).or(continueButton).first()
-    ).toBeVisible({ timeout: 10000 });
-
-    // Verify at least one is visible
-    const hasGoogleDriveStep = await googleDriveText.isVisible().catch(() => false);
-    const hasForm = await form.isVisible().catch(() => false);
-    const hasSignIn = await signInButton.isVisible().catch(() => false);
-    const hasContinue = await continueButton.isVisible().catch(() => false);
+    // Check each element individually with timeout
+    const hasGoogleDriveStep = await googleDriveText.isVisible({ timeout: 10000 }).catch(() => false);
+    const hasForm = await form.isVisible({ timeout: 10000 }).catch(() => false);
+    const hasSignIn = await signInButton.isVisible({ timeout: 10000 }).catch(() => false);
+    const hasContinue = await continueButton.isVisible({ timeout: 10000 }).catch(() => false);
 
     // Any of these states means the page has loaded successfully
     expect(hasGoogleDriveStep || hasForm || hasSignIn || hasContinue).toBeTruthy();
