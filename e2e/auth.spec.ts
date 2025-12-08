@@ -21,13 +21,16 @@ test.describe('Authentication', () => {
     if (await buildButton.isVisible()) {
       await buildButton.click();
       
-      // Should redirect to credential form
-      await expect(page).toHaveURL(/.*credentialForm.*/);
+      // Should redirect to a valid credential form route (skill, volunteer, role, etc.)
+      await expect(page).toHaveURL(/^\/(skill|volunteer|role|performance-review|identity-verification|newcredential)/);
+      
+      // Wait for the form to load
+      await page.waitForLoadState('networkidle');
       
       // Check for Google Drive connection step (Step 0)
       // This indicates the sign-in flow
-      const connectButton = page.getByText(/connect.*google|sign in.*google/i).or(
-        page.getByRole('button', { name: /connect|sign in/i })
+      const connectButton = page.getByText(/connect.*google|login.*google.*drive/i).or(
+        page.getByRole('button', { name: /login.*google.*drive|connect/i })
       ).first();
       
       // The button should be visible (user not authenticated)
