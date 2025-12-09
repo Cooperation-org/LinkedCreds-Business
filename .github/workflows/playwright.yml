@@ -11,7 +11,10 @@ jobs:
 
     env:
       CI: true
-
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXTAUTH_SECRET: "testsecret123"
+      GOOGLE_CLIENT_ID: "test"
+      GOOGLE_CLIENT_SECRET: "test"
     steps:
       - uses: actions/checkout@v3
 
