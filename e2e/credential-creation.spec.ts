@@ -5,42 +5,40 @@ test.describe('Credential Creation', () => {
     // Use a valid form route - /skill is the default credential form type
     await page.goto('/skill');
   });
+  test('credential form page loads', async ({ page }) => {
+    // Wait for the page to load and React to hydrate
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/\/skill/);
 
-  // TODO: Fix flaky test - elements not loading consistently in CI environment
-  // test('credential form page loads', async ({ page }) => {
-  //   // Wait for the page to load and React to hydrate
-  //   await page.waitForLoadState('networkidle');
-  //   await expect(page).toHaveURL(/\/skill/);
-
-  //   // Wait for the dynamically imported form component to load
-  //   // The form is dynamically imported with ssr: false, so we need to wait for it
-  //   await page.waitForLoadState('domcontentloaded');
+    // Wait for the dynamically imported form component to load
+    // The form is dynamically imported with ssr: false, so we need to wait for it
+    await page.waitForLoadState('domcontentloaded');
     
-  //   // Wait for at least one of the expected elements to be visible
-  //   // This ensures the page has fully rendered
-  //   const googleDriveText = page.getByText(/first.*login.*google.*drive/i).first();
-  //   const form = page.locator('form').first();
-  //   const signInButton = page.getByRole('button', { name: /login.*google.*drive/i }).first();
-  //   const continueButton = page.getByRole('button', { name: /continue without saving/i }).first();
+    // Wait for at least one of the expected elements to be visible
+    // This ensures the page has fully rendered
+    const googleDriveText = page.getByText(/first.*login.*google.*drive/i).first();
+    const form = page.locator('form').first();
+    const signInButton = page.getByRole('button', { name: /login.*google.*drive/i }).first();
+    const continueButton = page.getByRole('button', { name: /continue without saving/i }).first();
 
-  //   // Wait for the dynamic component to render - check for any of the expected elements
-  //   // Use Promise.race to wait for the first element that appears
-  //   await Promise.race([
-  //     googleDriveText.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {}),
-  //     form.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {}),
-  //     signInButton.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {}),
-  //     continueButton.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {})
-  //   ]);
+    // Wait for the dynamic component to render - check for any of the expected elements
+    // Use Promise.race to wait for the first element that appears
+    await Promise.race([
+      googleDriveText.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {}),
+      form.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {}),
+      signInButton.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {}),
+      continueButton.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {})
+    ]);
 
-  //   // Check each element individually with timeout
-  //   const hasGoogleDriveStep = await googleDriveText.isVisible({ timeout: 5000 }).catch(() => false);
-  //   const hasForm = await form.isVisible({ timeout: 5000 }).catch(() => false);
-  //   const hasSignIn = await signInButton.isVisible({ timeout: 5000 }).catch(() => false);
-  //   const hasContinue = await continueButton.isVisible({ timeout: 5000 }).catch(() => false);
+    // Check each element individually with timeout
+    const hasGoogleDriveStep = await googleDriveText.isVisible({ timeout: 5000 }).catch(() => false);
+    const hasForm = await form.isVisible({ timeout: 5000 }).catch(() => false);
+    const hasSignIn = await signInButton.isVisible({ timeout: 5000 }).catch(() => false);
+    const hasContinue = await continueButton.isVisible({ timeout: 5000 }).catch(() => false);
 
-  //   // Any of these states means the page has loaded successfully
-  //   expect(hasGoogleDriveStep || hasForm || hasSignIn || hasContinue).toBeTruthy();
-  // });
+    // Any of these states means the page has loaded successfully
+    expect(hasGoogleDriveStep || hasForm || hasSignIn || hasContinue).toBeTruthy();
+  });
 
   test('Step 1: can fill in user name', async ({ page }) => {
     const continueButton = page.getByRole('button', { name: /continue without saving/i });
