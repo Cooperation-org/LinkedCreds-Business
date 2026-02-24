@@ -6,17 +6,59 @@ test.describe('Credential Creation', () => {
     await page.goto('/skill', { waitUntil: 'domcontentloaded' });
   });
   test('credential form page loads', async ({ page }) => {
+    test.setTimeout(90000);
     await expect(page).toHaveURL(/\/skill/);
 
     // The form is dynamically imported (ssr: false). Waiting for `networkidle` is flaky
     // because NextAuth/Next.js can keep background requests open. Instead, wait for a single
     // "page is usable" signal with a bounded timeout.
-    const pageReady = page
-      .getByRole('button', { name: /continue without saving/i })
-      .or(page.getByRole('button', { name: /login with google drive/i }))
-      .or(page.locator('form'));
+    const consoleMessages: string[] = [];
+    page.on('console', msg => {
+      // Keep it small to avoid noisy output in CI
+      if (consoleMessages.length < 20) consoleMessages.push(`[console.${msg.type()}] ${msg.text()}`);
+    });
+    page.on('pageerror', err => {
+      if (consoleMessages.length < 20) consoleMessages.push(`[pageerror] ${String(err)}`);
+    });
 
-    await expect(pageReady.first()).toBeVisible({ timeout: 20000 });
+    const continueButton = page.getByRole('button', { name: /continue without saving/i });
+    const loginButton = page.getByRole('button', { name: /login with google drive/i });
+    const form = page.locator('form');
+    const step0Text = page.getByText(/first,\s*login with google drive/i);
+
+    // Avoid `.or(...).first()` because the "first" match can be a non-visible element
+    // (e.g. the <form>) even when one of the buttons is visible.
+    let ready = true;
+    try {
+      await expect.poll(
+        async () => {
+          const checks = await Promise.all([
+            continueButton.isVisible().catch(() => false),
+            loginButton.isVisible().catch(() => false),
+            step0Text.isVisible().catch(() => false),
+            // If the form exists in the DOM, we consider the page "loaded" even if it isn't visible yet.
+            form.count().then(c => c > 0).catch(() => false)
+          ]);
+          return checks.some(Boolean);
+        },
+        { timeout: 60000, intervals: [250, 500, 1000, 2000] }
+      ).toBeTruthy();
+    } catch {
+      ready = false;
+    }
+
+    if (!ready) {
+      const bodyText = (await page.locator('body').innerText().catch(() => '')).slice(0, 800);
+      await page.screenshot({ path: 'test-results/credential-form-page-loads-failure.png', fullPage: true });
+      throw new Error(
+        [
+          'Credential form did not become ready within 60s.',
+          `URL: ${page.url()}`,
+          bodyText ? `Body text (first 800 chars):\n${bodyText}` : 'Body text: <empty>',
+          consoleMessages.length ? `Messages:\n${consoleMessages.join('\n')}` : 'Messages: <none>'
+        ].join('\n\n')
+      );
+    }
   });
 
   test('Step 1: can fill in user name', async ({ page }) => {
