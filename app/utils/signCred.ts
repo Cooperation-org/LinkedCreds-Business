@@ -116,7 +116,8 @@ const signCred = async (
         case 'identity-verification':
         default:
           // Sign skill claim credential using the HR Context data model
-          const normalizedData: SkillClaimFormData = normalizeSkillClaimFormData(processedData as FormData)
+          const normalizedData: SkillClaimFormData = normalizeSkillClaimFormData(processedData as unknown as FormData)
+          console.log('🚀 ~ signCred ~ normalizedData:', normalizedData)
           signedVC = await credentialEngine.signSkillClaimVC(normalizedData as unknown as ISkillClaimCredential, keyPair, issuerDid)
           break
       }
@@ -138,6 +139,13 @@ const signCred = async (
 const processCredentialData = (data: FormData, formType?: string) => {
   // For skills and identity verification, we need to transform the data into the old format
   if (formType === 'skill' || formType === 'identity-verification') {
+    // Only include portfolio items with valid url - empty/partial items cause JSON-LD safe mode errors
+    const portfolio =
+      data.portfolio && data.portfolio.length > 0
+        ? data.portfolio
+            .filter((p: { url?: string }) => p && typeof p.url === 'string' && p.url.trim() !== '')
+            .map(({ googleId, ...rest }) => rest)
+        : []
     return {
       expirationDate: new Date(
         new Date().setFullYear(new Date().getFullYear() + 1)
@@ -150,10 +158,7 @@ const processCredentialData = (data: FormData, formType?: string) => {
           ? data.description
           : String(data.description || ''),
       achievementName: data.credentialName || '',
-      portfolio:
-        data.portfolio && data.portfolio.length > 0
-          ? data.portfolio.map(({ googleId, ...rest }) => rest)
-          : [{ name: '', url: '' }],
+      portfolio,
       evidenceLink: data?.evidenceLink || '',
       evidenceDescription: data.evidenceDescription || '',
       credentialType: formType || data.persons || ''

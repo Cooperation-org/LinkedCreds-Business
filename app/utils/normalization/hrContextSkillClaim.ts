@@ -27,7 +27,13 @@ export function normalizeSkillClaimFormData(formData: FormData): SkillClaimFormD
     }
   ] as ISkill[]
 
-  const evidence = formData.portfolio.length ? formData.portfolio.map((p: any) => ({ id: p.url, name: p.name, description: p.description })) : []
+  // Exclude items without valid url - empty/partial portfolio items cause JSON-LD safe mode errors
+  const evidence =
+    formData.portfolio?.length > 0
+      ? formData.portfolio
+          .filter((p: any) => p?.url && typeof p.url === 'string' && p.url.trim() !== '')
+          .map((p: any) => ({ id: p.url, name: p.name ?? '', description: p.description }))
+      : []
   return {
     personName: formData.fullName ?? '',
     skills,
